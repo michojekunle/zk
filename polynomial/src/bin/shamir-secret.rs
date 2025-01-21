@@ -1,14 +1,15 @@
 use ark_bn254::Fq;
 use polynomial::UnivariatePoly;
-use rand::Rng;
+use rand;
+use ark_ff::PrimeField;
 
 #[derive(Debug)]
-struct Point {
-    x: Fq,
-    y: Fq,
+struct Point<F> {
+    x: F,
+    y: F,
 }
 
-fn generate_shares(secret: i32, password: i32, threshold: usize, total_shares: usize) -> Vec<Point> {
+fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, total_shares: usize) -> Vec<Point<F>> {
     assert!(
         threshold <= total_shares,
         "Threshold must be less than or equal to total shares"
@@ -17,15 +18,15 @@ fn generate_shares(secret: i32, password: i32, threshold: usize, total_shares: u
 
     let mut rng = rand::thread_rng();
 
-    let mut xs: Vec<Fq> = Vec::new();
-    let mut ys: Vec<Fq> = Vec::new();
+    let mut xs: Vec<F> = Vec::new();
+    let mut ys: Vec<F> = Vec::new();
 
-    xs.push(Fq::from(password));
-    ys.push(Fq::from(secret));
+    xs.push(F::from(password));
+    ys.push(F::from(secret));
 
-    for i in [1..threshold].iter() {
-        xs.push(Fq::from(rng.gen_range(-100..100)));
-        ys.push(Fq::from(rng.gen_range(-100..100)));
+    for _ in [1..threshold].iter() {
+        xs.push(F::rand(&mut rng));
+        ys.push(F::rand(&mut rng));
     }
 
     dbg!(&xs, &ys);
@@ -34,8 +35,8 @@ fn generate_shares(secret: i32, password: i32, threshold: usize, total_shares: u
 
     // Generate points (shares)
     let mut shares = Vec::new();
-    for i in 1..=total_shares {
-        let x = Fq::from(rng.gen_range(-100..100));
+    for _ in 1..=total_shares {
+        let x = F::rand(&mut rng);
         let y = poly.evaluate(x);
         shares.push(Point { x, y });
     }
@@ -45,29 +46,30 @@ fn generate_shares(secret: i32, password: i32, threshold: usize, total_shares: u
     shares
 }
 
-fn reconstruct_secret(shares: &[Point], password: i32, threshold: usize) -> Option<Fq> {
+fn reconstruct_secret<F: PrimeField>(shares: &[Point<F>], password: i32, threshold: usize) -> Option<F> {
     if shares.len() < threshold {
         return None;
     }
 
     // Prepare points for interpolation
-    let xs: Vec<Fq> = shares[0..threshold].iter().map(|p| p.x).collect();
-    let ys: Vec<Fq> = shares[0..threshold].iter().map(|p| p.y).collect();
+    let xs: Vec<F> = shares[0..threshold].iter().map(|p| p.x).collect();
+    let ys: Vec<F> = shares[0..threshold].iter().map(|p| p.y).collect();
 
     // Use Lagrange interpolation
     let poly = UnivariatePoly::interpolate(xs, ys);
 
     // The secret is the constant term (evaluate at x = password)
-    Some(poly.evaluate(Fq::from(password)))
+    Some(poly.evaluate(F::from(password)))
 }
 
 fn main() {
-    generate_shares(500, 25, 3, 5);
+    generate_shares::<Fq>(500, 25, 3, 5);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ark_bn254::Fq;
 
     #[test]
     fn test_basic_sharing_and_reconstruction() {
@@ -76,7 +78,7 @@ mod tests {
         let total_shares = 5;
         let password = 25;
 
-        let shares = generate_shares(secret, password, threshold, total_shares);
+        let shares = generate_shares::<Fq>(secret, password, threshold, total_shares);
         assert_eq!(shares.len(), total_shares);
 
         let reconstructed = reconstruct_secret(&shares[..threshold], password, threshold);
@@ -90,7 +92,7 @@ mod tests {
         let total_shares = 5;
         let password = 25;
 
-        let shares = generate_shares(secret, password, threshold, total_shares);
+        let shares = generate_shares::<Fq>(secret, password, threshold, total_shares);
 
         let reconstructed1 = reconstruct_secret(&shares[1..4], password, threshold);
         let reconstructed2 = reconstruct_secret(&shares[2..5], password, threshold);
@@ -106,7 +108,7 @@ mod tests {
         let total_shares = 5;
         let password = 25;
 
-        let shares = generate_shares(secret, password, threshold, total_shares);
+        let shares = generate_shares::<Fq>(secret, password, threshold, total_shares);
         let reconstructed = reconstruct_secret(&shares[..2], password, threshold);
         assert_eq!(reconstructed, None);
     }
@@ -114,6 +116,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_invalid_threshold() {
-        generate_shares(42, 15, 0, 5);
+        generate_shares::<Fq>(42, 15, 0, 5);
     }
 }
