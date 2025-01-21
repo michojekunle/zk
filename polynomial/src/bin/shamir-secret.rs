@@ -29,9 +29,13 @@ fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, 
         ys.push(F::rand(&mut rng));
     }
 
-    dbg!(&xs, &ys);
-
     let poly = UnivariatePoly::interpolate(xs, ys);
+
+    // dbg!(poly.degree(), threshold, &poly.coefficients);
+
+    // if poly.degree() < (threshold - 1).try_into().unwrap() {
+    //     panic!("Failed to interpolate polynomial");
+    // }
 
     // Generate points (shares)
     let mut shares = Vec::new();
