@@ -24,18 +24,16 @@ fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, 
     xs.push(F::from(password));
     ys.push(F::from(secret));
 
-    for _ in [1..threshold].iter() {
+    for i in 1..threshold {
         xs.push(F::rand(&mut rng));
         ys.push(F::rand(&mut rng));
     }
 
     let poly = UnivariatePoly::interpolate(xs, ys);
 
-    // dbg!(poly.degree(), threshold, &poly.coefficients);
-
-    // if poly.degree() < (threshold - 1).try_into().unwrap() {
-    //     panic!("Failed to interpolate polynomial");
-    // }
+    if poly.degree() != (threshold - 1).try_into().unwrap() {
+        panic!("Failed to interpolate polynomial");
+    }
 
     // Generate points (shares)
     let mut shares = Vec::new();
@@ -44,8 +42,6 @@ fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, 
         let y = poly.evaluate(x);
         shares.push(Point { x, y });
     }
-
-    dbg!(&shares);
 
     shares
 }
@@ -67,7 +63,7 @@ fn reconstruct_secret<F: PrimeField>(shares: &[Point<F>], password: i32, thresho
 }
 
 fn main() {
-    generate_shares::<Fq>(500, 25, 3, 5);
+    generate_shares::<Fq>(500, 25, 4, 10);
 }
 
 #[cfg(test)]

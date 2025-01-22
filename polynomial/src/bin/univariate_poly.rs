@@ -141,6 +141,7 @@ mod test {
     fn test_fibonnacci_verification() {
         let fibonacci_poly = UnivariatePoly::interpolate(
             vec![
+                Fq::from(0),
                 Fq::from(1),
                 Fq::from(2),
                 Fq::from(3),
@@ -148,7 +149,6 @@ mod test {
                 Fq::from(5),
                 Fq::from(6),
                 Fq::from(7),
-                Fq::from(8),
             ],
             vec![
                 Fq::from(1),
@@ -163,9 +163,15 @@ mod test {
         );
 
         assert_eq!(fibonacci_poly.degree(), 7);
-        assert_eq!(fibonacci_poly.evaluate(Fq::from(30)), fibonacci_poly.evaluate(Fq::from(29)) + fibonacci_poly.evaluate(Fq::from(28)));
-        assert_eq!(fibonacci_poly.evaluate(Fq::from(0)), Fq::from(0));
-        assert_eq!(fibonacci_poly.evaluate(Fq::from(1)), Fq::from(1));
-        assert_eq!(fibonacci_poly.evaluate(Fq::from(8)), Fq::from(21));
+        assert_eq!(
+            fibonacci_poly.evaluate(Fq::from(7)),
+            fibonacci_poly.evaluate(Fq::from(6)) + fibonacci_poly.evaluate(Fq::from(5))
+        );
+        assert_eq!(
+            fibonacci_poly.evaluate(Fq::from(9)),
+            fibonacci_poly.evaluate(Fq::from(7)) + fibonacci_poly.evaluate(Fq::from(8))
+        );
+        assert_eq!(fibonacci_poly.evaluate(Fq::from(1)), Fq::from(0));
+        assert_eq!(fibonacci_poly.evaluate(Fq::from(8)), Fq::from(13));
     }
 }
