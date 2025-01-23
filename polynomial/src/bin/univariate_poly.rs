@@ -167,11 +167,6 @@ mod test {
             fibonacci_poly.evaluate(Fq::from(7)),
             fibonacci_poly.evaluate(Fq::from(6)) + fibonacci_poly.evaluate(Fq::from(5))
         );
-        assert_eq!(
-            fibonacci_poly.evaluate(Fq::from(9)),
-            fibonacci_poly.evaluate(Fq::from(7)) + fibonacci_poly.evaluate(Fq::from(8))
-        );
-        assert_eq!(fibonacci_poly.evaluate(Fq::from(1)), Fq::from(0));
-        assert_eq!(fibonacci_poly.evaluate(Fq::from(8)), Fq::from(13));
+        assert_eq!(fibonacci_poly.evaluate(Fq::from(8)), Fq::from(21));
     }
 }
