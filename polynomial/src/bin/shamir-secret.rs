@@ -24,7 +24,7 @@ fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, 
     xs.push(F::from(password));
     ys.push(F::from(secret));
 
-    for i in 1..threshold {
+    for _ in 1..threshold {
         xs.push(F::rand(&mut rng));
         ys.push(F::rand(&mut rng));
     }

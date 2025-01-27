@@ -34,8 +34,14 @@ impl<F: PrimeField> MultilinearPoly<F> {
         MultilinearPoly::new(new_coefficients)
     }
 
-    fn evaluate(&self) -> F {
-        todo!();
+    fn evaluate(&self, values: Vec<(usize, F)>) -> F {
+        let mut partial_evaluated_poly = self.clone();
+
+        for (pos, val) in values {
+            partial_evaluated_poly = partial_evaluated_poly.partial_evaluate((pos, val));
+        }
+
+        partial_evaluated_poly.coefficients[0]
     }
 
     fn get_unique_pairs_coefficients(arr: Vec<F>, pos: usize) -> Vec<(F, F)> {
@@ -57,23 +63,6 @@ impl<F: PrimeField> MultilinearPoly<F> {
 
         coefficients
     }
-
-    // // This function takes an index and the length of the evaluation form of the polynomial
-    // // (which must be a power of 2) and returns a binary vector representation of the
-    // // index, padded to fit the required number of bits.
-    // fn get_binary_value_for_index(index: usize, length: usize) -> Vec<u8> {
-    //     // Calculate the number of bits required to represent the index
-    //     let num_bits = (length as f64).log2() as usize;
-
-    //     // Ensure the length is a power of 2
-    //     assert_eq!(1 << num_bits, length, "Length must be a power of 2");
-
-    //     // Convert the index to binary and pad with leading zeros to match num_bits
-    //     (0..num_bits)
-    //         .rev()
-    //         .map(|bit| ((index >> bit) & 1) as u8)
-    //         .collect()
-    // }
 }
 
 fn main() {
@@ -114,7 +103,7 @@ mod test {
     use ark_bn254::Fq;
 
     #[test]
-    fn test_multilinear_polynomial_1() {
+    fn test_partial_evaluate_multilinear_polynomial_a_2v() {
         let poly = MultilinearPoly::<Fq> {
             coefficients: vec![Fq::from(0), Fq::from(2), Fq::from(0), Fq::from(5)],
         };
@@ -127,7 +116,7 @@ mod test {
     }
 
     #[test]
-    fn test_multilinear_polynomial_2() {
+    fn test_partial_evaluate_multilinear_polynomial_b_2v() {
         let poly = MultilinearPoly::<Fq> {
             coefficients: vec![Fq::from(0), Fq::from(2), Fq::from(0), Fq::from(5)],
         };
@@ -140,7 +129,7 @@ mod test {
     }
 
     #[test]
-    fn test_multilinear_polynomial_3() {
+    fn test_partial_evaluate_multilinear_polynomial_a_3v() {
         let poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
@@ -159,7 +148,7 @@ mod test {
     }
 
     #[test]
-    fn test_multilinear_polynomial_4() {
+    fn test_partial_evaluate_multilinear_polynomial_b_3v() {
         let poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
@@ -178,7 +167,7 @@ mod test {
     }
 
     #[test]
-    fn test_multilinear_polynomial_5() {
+    fn test_partial_evaluate_multilinear_polynomial_c_3v() {
         let poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
@@ -193,6 +182,25 @@ mod test {
         assert_eq!(
             result.coefficients,
             vec![Fq::from(0), Fq::from(9), Fq::from(0), Fq::from(11)]
+        );
+    }
+
+    #[test]
+    fn test_evaluate_multilinear_polynomial_abc() {
+        let poly_2 = MultilinearPoly::new(vec![
+            Fq::from(0),
+            Fq::from(0),
+            Fq::from(0),
+            Fq::from(3),
+            Fq::from(0),
+            Fq::from(0),
+            Fq::from(2),
+            Fq::from(5),
+        ]);
+        let result = poly_2.evaluate(vec![(2, Fq::from(1)), (1, Fq::from(5)), (0, Fq::from(3))]);
+        assert_eq!(
+            result,
+            Fq::from(55)
         );
     }
 }
