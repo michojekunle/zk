@@ -10,7 +10,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
         MultilinearPoly { coefficients }
     }
 
-    fn partial_evaluate(&self, (pos, val): (usize, F)) -> Self {
+    fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
         let length = self.coefficients.len();
         if 2_i32.pow(pos as u32 + 1u32) > length as i32 {
             panic!(
@@ -34,14 +34,11 @@ impl<F: PrimeField> MultilinearPoly<F> {
         MultilinearPoly::new(new_coefficients)
     }
 
-    fn evaluate(&self, values: Vec<(usize, F)>) -> F {
-        let mut partial_evaluated_poly = self.clone();
-
+    fn evaluate(&mut self, values: Vec<(usize, F)>) -> F {
         for (pos, val) in values {
-            partial_evaluated_poly = partial_evaluated_poly.partial_evaluate((pos, val));
+            *self = self.partial_evaluate((pos, val));            
         }
-
-        partial_evaluated_poly.coefficients[0]
+        self.coefficients[0]
     }
 
     fn get_unique_pairs_coefficients(arr: Vec<F>, pos: usize) -> Vec<(F, F)> {
@@ -104,7 +101,7 @@ mod test {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_a_2v() {
-        let poly = MultilinearPoly::<Fq> {
+        let mut poly = MultilinearPoly::<Fq> {
             coefficients: vec![Fq::from(0), Fq::from(2), Fq::from(0), Fq::from(5)],
         };
 
@@ -117,7 +114,7 @@ mod test {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_b_2v() {
-        let poly = MultilinearPoly::<Fq> {
+        let mut poly = MultilinearPoly::<Fq> {
             coefficients: vec![Fq::from(0), Fq::from(2), Fq::from(0), Fq::from(5)],
         };
 
@@ -130,7 +127,7 @@ mod test {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_a_3v() {
-        let poly_2 = MultilinearPoly::new(vec![
+        let mut poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
             Fq::from(0),
@@ -149,7 +146,7 @@ mod test {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_b_3v() {
-        let poly_2 = MultilinearPoly::new(vec![
+        let mut poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
             Fq::from(0),
@@ -168,7 +165,7 @@ mod test {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_c_3v() {
-        let poly_2 = MultilinearPoly::new(vec![
+        let mut poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
             Fq::from(0),
@@ -187,7 +184,7 @@ mod test {
 
     #[test]
     fn test_evaluate_multilinear_polynomial_abc() {
-        let poly_2 = MultilinearPoly::new(vec![
+        let mut poly_2 = MultilinearPoly::new(vec![
             Fq::from(0),
             Fq::from(0),
             Fq::from(0),
