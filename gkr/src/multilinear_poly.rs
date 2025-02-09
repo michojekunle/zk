@@ -23,7 +23,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
         let mut new_evals = vec![F::zero(); (&length / 2).try_into().unwrap()];
 
         let unique_pairs_evals = Self::get_unique_pairs_evals(self.evals.clone(), pos);
-        println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
+        // println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
 
         for (i, (c_i, c_pair_index)) in unique_pairs_evals.iter().enumerate() {
             new_evals[i] = *c_i + val * (*c_pair_index - c_i);
@@ -48,10 +48,10 @@ impl<F: PrimeField> MultilinearPoly<F> {
 
             // Only process unique pairs (avoid duplicates)
             if i < pair {
-                println!(
-                    "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
-                    i, pair, arr[i], arr[pair]
-                );
+                // println!(
+                //     "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
+                //     i, pair, arr[i], arr[pair]
+                // );
                 evals.push((arr[i], arr[pair])); // Store evals as pairs
             }
         }
@@ -70,10 +70,10 @@ fn main() {
 
             // Only process unique pairs (avoid duplicates)
             if i < pair {
-                println!(
-                    "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
-                    i, pair, arr[i], arr[pair]
-                );
+                // println!(
+                //     "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
+                //     i, pair, arr[i], arr[pair]
+                // );
                 evals.push((arr[i], arr[pair])); // Store evals as pairs
             }
         }
@@ -86,7 +86,7 @@ fn main() {
     let pos = 1;
 
     let unique_pairs_evals = get_unique_pairs_evals(arr, pos);
-    println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
+    // println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
 }
 
 #[cfg(test)]
