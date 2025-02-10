@@ -85,8 +85,8 @@ impl<F: PrimeField> Circuit<F> {
         let l_i_vars = layer_id as u32;
         let l_i_plus_1_vars = layer_id as u32 + 1;
 
-        let n_vars: usize;
-        let add_i_evals: Vec<F>;
+        let mut n_vars: usize = 0;
+        let mut add_i_evals: Vec<F> = Vec::new();
 
         for gate in layer {
             if gate.op == Op::ADD {
@@ -102,18 +102,62 @@ impl<F: PrimeField> Circuit<F> {
                 let eval_pow = combined_binary.len();
 
                 // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
-                let eval_true_index = u32::from_str_radix(&combined_binary, 2).unwrap();
-                // if
-                // if (add_i_evals )
-                // add_i_evals
+                let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
+
+                dbg!(&eval_true_index);
+
+                n_vars = eval_pow;
+
+                if add_i_evals.len() > 0 {
+                    add_i_evals[eval_true_index] = F::one();
+                } else {
+                    add_i_evals = vec![F::zero(); 1 << eval_pow];
+                    add_i_evals[eval_true_index] = F::one();
+                }
             }
         }
 
-        MultilinearPoly::new(Vec::<F>::new(), 0)
+        MultilinearPoly::new(add_i_evals, n_vars)
     }
 
     pub(crate) fn mul_i(&self, layer_id: usize) -> MultilinearPoly<F> {
-        todo!()
+        let layer = &self.layers[layer_id];
+        let l_i_vars = layer_id as u32;
+        let l_i_plus_1_vars = layer_id as u32 + 1;
+
+        let mut n_vars: usize = 0;
+        let mut add_i_evals: Vec<F> = Vec::new();
+
+        for gate in layer {
+            if gate.op == Op::MUL {
+                // Format the output, left, and right as binary strings with the specified widths
+                let output_binary = format!("{:0width$b}", gate.output, width = l_i_vars as usize);
+                let left_binary =
+                    format!("{:0width$b}", gate.left, width = l_i_plus_1_vars as usize);
+                let right_binary =
+                    format!("{:0width$b}", gate.right, width = l_i_plus_1_vars as usize);
+
+                // Combine the binary strings
+                let combined_binary = format!("{}{}{}", output_binary, left_binary, right_binary);
+                let eval_pow = combined_binary.len();
+
+                // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
+                let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
+
+                dbg!(&eval_true_index);
+
+                n_vars = eval_pow;
+
+                if add_i_evals.len() > 0 {
+                    add_i_evals[eval_true_index] = F::one();
+                } else {
+                    add_i_evals = vec![F::zero(); 1 << eval_pow];
+                    add_i_evals[eval_true_index] = F::one();
+                }
+            }
+        }
+
+        MultilinearPoly::new(add_i_evals, n_vars)
     }
 }
 
@@ -209,9 +253,77 @@ mod tests {
 
         let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
 
-        circuit.add_i(1);
+        let circuit_add_0 = circuit.add_i(0);
+        let circuit_add_1 = circuit.add_i(1);
+        let circuit_add_2 = circuit.add_i(2);
+
+        dbg!(&circuit_add_0, &circuit_add_0.evals.len());
+        dbg!(&circuit_add_1, &circuit_add_1.evals.len());
+        dbg!(&circuit_add_2, &circuit_add_2.evals.len());
+
+        assert!(
+            circuit_add_0.evals.len() == 8,
+            "getting add_i for layer_index 0 failed"
+        );
+        assert!(
+            circuit_add_1.evals.len() == 32,
+            "getting add_i for layer_index 1 failed"
+        );
+        assert!(
+            circuit_add_2.evals.len() == 256,
+            "getting add_i for layer_index 2 failed"
+        );
     }
 
     #[test]
-    fn test_mul_i() {}
+    fn test_mul_i() {
+        let gate_a = Gate::new(0, 1, 0, Op::ADD);
+        let gate_b = Gate::new(2, 3, 1, Op::MUL);
+        let gate_c = Gate::new(4, 5, 2, Op::MUL);
+        let gate_d = Gate::new(6, 7, 3, Op::MUL);
+        let gate_e = Gate::new(0, 1, 0, Op::ADD);
+        let gate_f = Gate::new(2, 3, 1, Op::MUL);
+        let gate_g = Gate::new(0, 1, 0, Op::ADD);
+
+        let layer_2 = vec![gate_a, gate_b, gate_c, gate_d];
+        let layer_1 = vec![gate_e, gate_f];
+        let layer_0 = vec![gate_g];
+
+        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
+
+        let circuit_mul_0 = circuit.mul_i(0);
+        let circuit_mul_1 = circuit.mul_i(1);
+        let circuit_mul_2 = circuit.mul_i(2);
+
+        dbg!(&circuit_mul_0, &circuit_mul_0.evals.len());
+        dbg!(&circuit_mul_1, &circuit_mul_1.evals.len());
+        dbg!(&circuit_mul_2, &circuit_mul_2.evals.len());
+
+        assert!(
+            circuit_mul_0.evals.len() == 0,
+            "getting mul_i for layer_index 0 failed"
+        );
+        assert!(
+            circuit_mul_1.evals.len() == 32,
+            "getting mul_i for layer_index 1 failed"
+        );
+
+        // verify mul_2 poly len and points gates
+        assert!(
+            circuit_mul_2.evals.len() == 256,
+            "getting mul_i for layer_index 2 failed"
+        );
+        assert!(
+            circuit_mul_2.evals[usize::from_str_radix("01010011", 2).unwrap()] == Fr::from(1),
+            "ensure mul_i for layer_index 2 at 01010011 failed"
+        );
+        assert!(
+            circuit_mul_2.evals[usize::from_str_radix("10100101", 2).unwrap()] == Fr::from(1),
+            "ensure mul_i for layer_index 2 at 10100101 failed"
+        );
+        assert!(
+            circuit_mul_2.evals[usize::from_str_radix("11110111", 2).unwrap()] == Fr::from(1),
+            "ensure mul_i for layer_index 2 at 11110111 failed"
+        );
+    }
 }
