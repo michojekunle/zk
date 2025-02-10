@@ -28,6 +28,7 @@ impl<T: Digest + Default + FixedOutputReset, F: PrimeField> FiatShamir<T, F> {
     pub(crate) fn squeeze(&mut self) -> F {
         let hash_result = self.hasher.finalize_reset();
         let seed: [u8; 32] = hash_result.as_slice()[..32].try_into().unwrap(); // Ensure correct size (32 bytes)
+        Digest::update(&mut self.hasher, &hash_result);
         let mut rng = StdRng::from_seed(seed);
         F::rand(&mut rng)
     }
@@ -56,6 +57,30 @@ mod tests {
 
         transcript.absorb(&[element]);
         let random_element = transcript.squeeze();
+
+        assert_ne!(random_element, Fq::from(element)); // verify randomness
+    }
+
+    #[test]
+    fn test_sample_challenge_should_absorb_after_sampling() {
+        let mut transcript = FiatShamir::<Keccak256, Fq>::new();
+
+        let element = 42;
+
+        transcript.absorb(&[element]);
+        let random_element = transcript.squeeze();
+        let random_element_i = transcript.squeeze();
+        let random_element_j = transcript.squeeze();
+        let random_element_k = transcript.squeeze();
+        let random_element_l = transcript.squeeze();
+        let random_element_m = transcript.squeeze();
+
+        dbg!(&random_element);
+        dbg!(&random_element_i);
+        dbg!(&random_element_j);
+        dbg!(&random_element_k);
+        dbg!(&random_element_l);
+        dbg!(&random_element_m);
 
         assert_ne!(random_element, Fq::from(element)); // verify randomness
     }
