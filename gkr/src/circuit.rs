@@ -159,6 +159,18 @@ impl<F: PrimeField> Circuit<F> {
 
         MultilinearPoly::new(add_i_evals, n_vars)
     }
+
+    pub(crate) fn w_add(poly_1: MultilinearPoly<F>, poly_2: MultilinearPoly<F>) -> MultilinearPoly<F> {
+        todo!();
+    }
+
+    pub(crate) fn w_mul(poly_1: MultilinearPoly<F>, poly_2: MultilinearPoly<F>) -> MultilinearPoly<F> {
+        todo!();
+    }
+
+    pub(crate) fn generate_fbc() {
+        todo!();
+    }
 }
 
 #[cfg(test)]
