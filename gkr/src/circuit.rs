@@ -1,4 +1,5 @@
 use crate::multilinear_poly::MultilinearPoly;
+use crate::utils::{ProductPoly, SumPoly};
 use ark_ff::PrimeField;
 use std::marker::PhantomData;
 
@@ -104,8 +105,6 @@ impl<F: PrimeField> Circuit<F> {
                 // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
                 let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
 
-                dbg!(&eval_true_index);
-
                 n_vars = eval_pow;
 
                 if add_i_evals.len() > 0 {
@@ -144,8 +143,6 @@ impl<F: PrimeField> Circuit<F> {
                 // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
                 let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
 
-                dbg!(&eval_true_index);
-
                 n_vars = eval_pow;
 
                 if add_i_evals.len() > 0 {
@@ -160,16 +157,43 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(add_i_evals, n_vars)
     }
 
-    pub(crate) fn w_add(poly_1: MultilinearPoly<F>, poly_2: MultilinearPoly<F>) -> MultilinearPoly<F> {
-        todo!();
+    pub(crate) fn w_add(poly_1: &MultilinearPoly<F>, poly_2: &MultilinearPoly<F>) -> MultilinearPoly<F> {
+        let new_nvars = poly_1.n_vars + poly_2.n_vars;
+        let mut new_evals = vec![F::zero(); 1 << new_nvars];
+
+        for i in 0..poly_1.evals.len() {
+            for j in 0..poly_2.evals.len() {
+                let new_evals_i = usize::from_str_radix(&format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars), 2).unwrap();
+                new_evals[new_evals_i] = poly_1.evals[i] + poly_2.evals[j];
+            }
+        }
+
+        MultilinearPoly::new(new_evals, new_nvars)
     }
 
-    pub(crate) fn w_mul(poly_1: MultilinearPoly<F>, poly_2: MultilinearPoly<F>) -> MultilinearPoly<F> {
-        todo!();
+    pub(crate) fn w_mul(poly_1: &MultilinearPoly<F>, poly_2: &MultilinearPoly<F>) -> MultilinearPoly<F> {
+        let new_nvars = poly_1.n_vars + poly_2.n_vars;
+        let mut new_evals = vec![F::zero(); 1 << new_nvars];
+
+        for i in 0..poly_1.evals.len() {
+            for j in 0..poly_2.evals.len() {
+                let new_evals_i = usize::from_str_radix(&format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars), 2).unwrap();
+                new_evals[new_evals_i] = poly_1.evals[i] * poly_2.evals[j];
+            }
+        }
+
+        MultilinearPoly::new(new_evals, new_nvars)
     }
 
-    pub(crate) fn generate_fbc() {
-        todo!();
+    pub(crate) fn generate_fbc(add_i: MultilinearPoly<F>, mul_i: MultilinearPoly<F>, w_i_plus_1: MultilinearPoly<F>) -> SumPoly<F> {
+        let w_add_bc = Self::w_add(&w_i_plus_1, &w_i_plus_1);
+        let w_mul_bc = Self::w_mul(&w_i_plus_1, &w_i_plus_1);
+        let mut product_polys: Vec<ProductPoly<F>> = Vec::new();
+
+        product_polys.push(ProductPoly::new(vec![add_i, w_add_bc]));
+        product_polys.push(ProductPoly::new(vec![mul_i, w_mul_bc]));
+
+        SumPoly::new(product_polys)
     }
 }
 
@@ -205,7 +229,6 @@ mod tests {
             Fr::from(8u64),
         ];
         let outputs = circuit.eval(input);
-        dbg!(&outputs);
         assert_eq!(outputs.len(), 4);
     }
 
@@ -240,10 +263,6 @@ mod tests {
         let layer_1_poly = circuit.get_layer_poly(1, input.clone());
         let layer_2_poly = circuit.get_layer_poly(2, input);
 
-        dbg!(&layer_0_poly);
-        dbg!(&layer_1_poly);
-        dbg!(&layer_2_poly);
-
         assert_eq!(layer_0_poly.evals.len(), 1);
         assert_eq!(layer_1_poly.evals.len(), 2);
         assert_eq!(layer_2_poly.evals.len(), 4);
@@ -268,10 +287,6 @@ mod tests {
         let circuit_add_0 = circuit.add_i(0);
         let circuit_add_1 = circuit.add_i(1);
         let circuit_add_2 = circuit.add_i(2);
-
-        dbg!(&circuit_add_0, &circuit_add_0.evals.len());
-        dbg!(&circuit_add_1, &circuit_add_1.evals.len());
-        dbg!(&circuit_add_2, &circuit_add_2.evals.len());
 
         assert!(
             circuit_add_0.evals.len() == 8,
@@ -307,10 +322,6 @@ mod tests {
         let circuit_mul_1 = circuit.mul_i(1);
         let circuit_mul_2 = circuit.mul_i(2);
 
-        dbg!(&circuit_mul_0, &circuit_mul_0.evals.len());
-        dbg!(&circuit_mul_1, &circuit_mul_1.evals.len());
-        dbg!(&circuit_mul_2, &circuit_mul_2.evals.len());
-
         assert!(
             circuit_mul_0.evals.len() == 0,
             "getting mul_i for layer_index 0 failed"
@@ -337,5 +348,99 @@ mod tests {
             circuit_mul_2.evals[usize::from_str_radix("11110111", 2).unwrap()] == Fr::from(1),
             "ensure mul_i for layer_index 2 at 11110111 failed"
         );
+    }
+    
+    #[test]
+    fn test_w_add() {
+        // Create two simple polynomials
+        let poly1 = MultilinearPoly::new(vec![Fr::from(1u64), Fr::from(2u64)], 1);
+        let poly2 = MultilinearPoly::new(vec![Fr::from(3u64), Fr::from(4u64)], 1);
+
+        let result = Circuit::<Fr>::w_add(&poly1, &poly2);
+        let result_2 = Circuit::<Fr>::w_add(&result, &result);
+
+        // Result should have n_vars = 2 and 2^2 = 4 evaluations
+        assert_eq!(result.n_vars, 2);
+        assert_eq!(result.evals.len(), 4);
+
+        // Result should have n_vars = 4 and 2^4 = 16 evaluations
+        assert_eq!(result_2.n_vars, 4);
+        assert_eq!(result_2.evals.len(), 16);
+
+        // Check specific evaluation points
+        // For binary representation: 00, 01, 10, 11
+        assert_eq!(result.evals[0], Fr::from(4u64)); // 1 + 3
+        assert_eq!(result.evals[1], Fr::from(5u64)); // 1 + 4
+        assert_eq!(result.evals[2], Fr::from(5u64)); // 2 + 3
+        assert_eq!(result.evals[3], Fr::from(6u64)); // 2 + 4
+
+        // Check specific evaluation points
+        // For binary representation: 0000, 0001, 0010, 0011, 0100, 0101,0110, 0111, 1000, 1001, 1010, 1011, 1100, 1101, 1110, 1111
+        assert_eq!(result_2.evals[0], Fr::from(8u64)); // 4 + 4
+        assert_eq!(result_2.evals[1], Fr::from(9u64)); // 4 + 5
+        assert_eq!(result_2.evals[2], Fr::from(9u64)); // 4 + 5
+        assert_eq!(result_2.evals[3], Fr::from(10u64)); // 4 + 6
+        assert_eq!(result_2.evals[4], Fr::from(9u64)); // 5 + 4
+        assert_eq!(result_2.evals[5], Fr::from(10u64)); // 5 + 5
+        assert_eq!(result_2.evals[6], Fr::from(10u64)); // 5 + 5
+        assert_eq!(result_2.evals[7], Fr::from(11u64)); // 5 + 6
+        assert_eq!(result_2.evals[8], Fr::from(9u64)); // 5 + 4
+        assert_eq!(result_2.evals[9], Fr::from(10u64)); // 5 + 5
+        assert_eq!(result_2.evals[10], Fr::from(10u64)); // 5 + 5
+        assert_eq!(result_2.evals[11], Fr::from(11u64)); // 5 + 6
+        assert_eq!(result_2.evals[12], Fr::from(10u64)); // 6 + 4
+        assert_eq!(result_2.evals[13], Fr::from(11u64)); // 6 + 5
+        assert_eq!(result_2.evals[14], Fr::from(11u64)); // 6 + 5
+        assert_eq!(result_2.evals[15], Fr::from(12u64)); // 6 + 6
+    }
+
+    #[test]
+    fn test_w_mul() {
+        // Create two simple polynomials
+        let poly1 = MultilinearPoly::new(vec![Fr::from(1u64), Fr::from(2u64)], 1);
+        let poly2 = MultilinearPoly::new(vec![Fr::from(3u64), Fr::from(4u64)], 1);
+
+        let result = Circuit::<Fr>::w_mul(&poly1, &poly2);
+        let result_2 = Circuit::<Fr>::w_mul(&result, &result);
+
+        // Result should have n_vars = 2 and 2^2 = 4 evaluations
+        assert_eq!(result.n_vars, 2);
+        assert_eq!(result.evals.len(), 4);
+
+        // Result should have n_vars = 4 and 2^4 = 16 evaluations
+        assert_eq!(result_2.n_vars, 4);
+        assert_eq!(result_2.evals.len(), 16);
+
+        // Check specific evaluation points
+        // For binary representation: 00, 01, 10, 11
+        assert_eq!(result.evals[0], Fr::from(3u64)); // 1 * 3
+        assert_eq!(result.evals[1], Fr::from(4u64)); // 1 * 4
+        assert_eq!(result.evals[2], Fr::from(6u64)); // 2 * 3
+        assert_eq!(result.evals[3], Fr::from(8u64)); // 2 * 4
+
+        
+        // Check specific evaluation points
+        // For binary representation: 0000, 0001, 0010, 0011, 0100, 0101,0110, 0111, 1000, 1001, 1010, 1011, 1100, 1101, 1110, 1111
+        assert_eq!(result_2.evals[0], Fr::from(9u64)); // 3 * 3
+        assert_eq!(result_2.evals[1], Fr::from(12u64)); // 3 * 4
+        assert_eq!(result_2.evals[2], Fr::from(18u64)); // 3 * 6
+        assert_eq!(result_2.evals[3], Fr::from(24u64)); // 3 * 8
+        assert_eq!(result_2.evals[4], Fr::from(12u64)); // 4 * 3
+        assert_eq!(result_2.evals[5], Fr::from(16u64)); // 4 * 4
+        assert_eq!(result_2.evals[6], Fr::from(24u64)); // 4 * 6
+        assert_eq!(result_2.evals[7], Fr::from(32u64)); // 4 * 8
+        assert_eq!(result_2.evals[8], Fr::from(18u64)); // 6 * 3
+        assert_eq!(result_2.evals[9], Fr::from(24u64)); // 6 * 4
+        assert_eq!(result_2.evals[10], Fr::from(36u64)); // 6 * 6
+        assert_eq!(result_2.evals[11], Fr::from(48u64)); // 6 * 8
+        assert_eq!(result_2.evals[12], Fr::from(24u64)); // 8 * 3
+        assert_eq!(result_2.evals[13], Fr::from(32u64)); // 8 * 4
+        assert_eq!(result_2.evals[14], Fr::from(48u64)); // 8 * 6
+        assert_eq!(result_2.evals[15], Fr::from(64u64)); // 8 * 8
+    }
+    
+    #[test]
+    fn test_get_fbc_poly() {
+        
     }
 }

@@ -48,7 +48,6 @@ impl<F: PrimeField> SumPoly<F> {
             let eval = self.polys[i].evaluate(value.to_vec());
             sum += eval;
         }
-
         sum
     }
 }
