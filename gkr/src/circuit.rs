@@ -157,13 +157,20 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(add_i_evals, n_vars)
     }
 
-    pub(crate) fn w_add(poly_1: &MultilinearPoly<F>, poly_2: &MultilinearPoly<F>) -> MultilinearPoly<F> {
+    pub(crate) fn w_add(
+        poly_1: &MultilinearPoly<F>,
+        poly_2: &MultilinearPoly<F>,
+    ) -> MultilinearPoly<F> {
         let new_nvars = poly_1.n_vars + poly_2.n_vars;
         let mut new_evals = vec![F::zero(); 1 << new_nvars];
 
         for i in 0..poly_1.evals.len() {
             for j in 0..poly_2.evals.len() {
-                let new_evals_i = usize::from_str_radix(&format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars), 2).unwrap();
+                let new_evals_i = usize::from_str_radix(
+                    &format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars),
+                    2,
+                )
+                .unwrap();
                 new_evals[new_evals_i] = poly_1.evals[i] + poly_2.evals[j];
             }
         }
@@ -171,13 +178,20 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(new_evals, new_nvars)
     }
 
-    pub(crate) fn w_mul(poly_1: &MultilinearPoly<F>, poly_2: &MultilinearPoly<F>) -> MultilinearPoly<F> {
+    pub(crate) fn w_mul(
+        poly_1: &MultilinearPoly<F>,
+        poly_2: &MultilinearPoly<F>,
+    ) -> MultilinearPoly<F> {
         let new_nvars = poly_1.n_vars + poly_2.n_vars;
         let mut new_evals = vec![F::zero(); 1 << new_nvars];
 
         for i in 0..poly_1.evals.len() {
             for j in 0..poly_2.evals.len() {
-                let new_evals_i = usize::from_str_radix(&format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars), 2).unwrap();
+                let new_evals_i = usize::from_str_radix(
+                    &format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars),
+                    2,
+                )
+                .unwrap();
                 new_evals[new_evals_i] = poly_1.evals[i] * poly_2.evals[j];
             }
         }
@@ -185,7 +199,11 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(new_evals, new_nvars)
     }
 
-    pub(crate) fn generate_fbc(add_i: MultilinearPoly<F>, mul_i: MultilinearPoly<F>, w_i_plus_1: MultilinearPoly<F>) -> SumPoly<F> {
+    pub(crate) fn generate_fbc(
+        add_i: MultilinearPoly<F>,
+        mul_i: MultilinearPoly<F>,
+        w_i_plus_1: MultilinearPoly<F>,
+    ) -> SumPoly<F> {
         let w_add_bc = Self::w_add(&w_i_plus_1, &w_i_plus_1);
         let w_mul_bc = Self::w_mul(&w_i_plus_1, &w_i_plus_1);
         let mut product_polys: Vec<ProductPoly<F>> = Vec::new();
@@ -349,7 +367,7 @@ mod tests {
             "ensure mul_i for layer_index 2 at 11110111 failed"
         );
     }
-    
+
     #[test]
     fn test_w_add() {
         // Create two simple polynomials
@@ -418,7 +436,6 @@ mod tests {
         assert_eq!(result.evals[2], Fr::from(6u64)); // 2 * 3
         assert_eq!(result.evals[3], Fr::from(8u64)); // 2 * 4
 
-        
         // Check specific evaluation points
         // For binary representation: 0000, 0001, 0010, 0011, 0100, 0101,0110, 0111, 1000, 1001, 1010, 1011, 1100, 1101, 1110, 1111
         assert_eq!(result_2.evals[0], Fr::from(9u64)); // 3 * 3
@@ -438,9 +455,7 @@ mod tests {
         assert_eq!(result_2.evals[14], Fr::from(48u64)); // 8 * 6
         assert_eq!(result_2.evals[15], Fr::from(64u64)); // 8 * 8
     }
-    
+
     #[test]
-    fn test_get_fbc_poly() {
-        
-    }
+    fn test_get_fbc_poly() {}
 }

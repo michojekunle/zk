@@ -30,7 +30,7 @@ fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
     let mut poly = poly.clone();
 
     for i in 0..poly.n_vars {
-        let round_poly: [F; 2]  = [
+        let round_poly: [F; 2] = [
             poly.partial_evaluate((poly.n_vars - 1, F::zero()))
                 .evals
                 .iter()
@@ -61,14 +61,16 @@ fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
     }
 }
 
-fn partial_prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
+fn partial_prove<F: PrimeField>(
+    poly: &MultilinearPoly<F>,
+    claimed_sum: F,
+    &mut transcript: FiatShamir<Keccak256, F>,
+) -> Proof<F> {
     let mut round_polys: Vec<[F; 2]> = vec![];
 
     // public
     // poly
     // claimed_sum
-
-    let mut transcript = FiatShamir::<Keccak256, F>::new();
 
     transcript.absorb(
         poly.evals
@@ -83,7 +85,7 @@ fn partial_prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Pr
     let mut poly = poly.clone();
 
     for i in 0..poly.n_vars {
-        let round_poly: [F; 2]  = [
+        let round_poly: [F; 2] = [
             poly.partial_evaluate((poly.n_vars - 1, F::zero()))
                 .evals
                 .iter()
@@ -162,14 +164,16 @@ fn verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) -> boo
     true
 }
 
-fn partial_verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) -> Vec<F> {
+fn partial_verify<F: PrimeField>(
+    proof: &Proof<F>,
+    poly: &mut MultilinearPoly<F>,
+    &mut transcript: FiatShamir<Keccak256, F>,
+) -> (Vec<F>, F) {
     if proof.round_polys.len() != poly.n_vars {
         return false;
     }
 
     let mut challenges = vec![];
-
-    let mut transcript = FiatShamir::<Keccak256, F>::new();
 
     transcript.absorb(
         poly.evals
@@ -213,8 +217,8 @@ fn partial_verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>
 
 #[cfg(test)]
 mod tests {
-    use crate::multilinear_poly::MultilinearPoly;
     use crate::multilinear_poly::tests::to_field;
+    use crate::multilinear_poly::MultilinearPoly;
     use crate::sumcheck_protocol::{prove, verify};
     use ark_bn254::Fr;
 
