@@ -8,6 +8,11 @@ struct Proof<F: PrimeField> {
     round_polys: Vec<[F; 2]>,
 }
 
+struct PartialProof<F: PrimeField> {
+    claimed_sum: F,
+    round_polys: Vec<[F; 3]>,
+}
+
 fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
     let mut round_polys: Vec<[F; 2]> = vec![];
 
@@ -64,9 +69,9 @@ fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
 fn partial_prove<F: PrimeField>(
     poly: &MultilinearPoly<F>,
     claimed_sum: F,
-    &mut transcript: FiatShamir<Keccak256, F>,
-) -> Proof<F> {
-    let mut round_polys: Vec<[F; 2]> = vec![];
+    transcript: &mut FiatShamir<Keccak256, F>,
+) -> PartialProof<F> {
+    let mut round_polys: Vec<[F; 3]> = vec![];
 
     // public
     // poly
@@ -85,12 +90,16 @@ fn partial_prove<F: PrimeField>(
     let mut poly = poly.clone();
 
     for i in 0..poly.n_vars {
-        let round_poly: [F; 2] = [
+        let round_poly: [F; 3] = [
             poly.partial_evaluate((poly.n_vars - 1, F::zero()))
                 .evals
                 .iter()
                 .sum(),
             poly.partial_evaluate((poly.n_vars - 1, F::one()))
+                .evals
+                .iter()
+                .sum(),
+            poly.partial_evaluate((poly.n_vars - 1, F::from(2)))
                 .evals
                 .iter()
                 .sum(),
@@ -110,7 +119,7 @@ fn partial_prove<F: PrimeField>(
         poly = poly.partial_evaluate((poly.n_vars - 1, challenge))
     }
 
-    Proof {
+    PartialProof {
         claimed_sum,
         round_polys,
     }
@@ -165,12 +174,12 @@ fn verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) -> boo
 }
 
 fn partial_verify<F: PrimeField>(
-    proof: &Proof<F>,
+    proof: &PartialProof<F>,
     poly: &mut MultilinearPoly<F>,
-    &mut transcript: FiatShamir<Keccak256, F>,
+    transcript: &mut FiatShamir<Keccak256, F>,
 ) -> (Vec<F>, F) {
     if proof.round_polys.len() != poly.n_vars {
-        return false;
+        return (vec![], F::zero());
     }
 
     let mut challenges = vec![];
@@ -189,7 +198,7 @@ fn partial_verify<F: PrimeField>(
 
     for round_poly in &proof.round_polys {
         if claimed_sum != round_poly.iter().sum() {
-            return false;
+            return (vec![], F::zero());
         }
 
         transcript.absorb(
