@@ -238,4 +238,9 @@ mod tests {
 
         dbg!(verify(&proof, &mut poly));
     }
+
+    #[test]
+    fn test_partial_sumcheck_gkr() {
+        
+    }
 }
