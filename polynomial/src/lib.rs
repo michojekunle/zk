@@ -1,13 +1,13 @@
+use ark_ff::PrimeField;
 use std::iter::{Product, Sum};
 use std::ops::{Add, Mul};
-use ark_ff::PrimeField;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UnivariatePoly<F: PrimeField> {
     coefficients: Vec<F>,
 }
 
-impl <F: PrimeField>UnivariatePoly<F> {
+impl<F: PrimeField> UnivariatePoly<F> {
     pub fn new(coefficients: Vec<F>) -> Self {
         UnivariatePoly { coefficients }
     }
@@ -55,7 +55,7 @@ impl <F: PrimeField>UnivariatePoly<F> {
     }
 }
 
-impl <F: PrimeField>Mul for UnivariatePoly<F> {
+impl<F: PrimeField> Mul for UnivariatePoly<F> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -72,20 +72,20 @@ impl <F: PrimeField>Mul for UnivariatePoly<F> {
     }
 }
 
-impl <F: PrimeField>Sum for UnivariatePoly<F> {
+impl<F: PrimeField> Sum for UnivariatePoly<F> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(UnivariatePoly::new(vec![F::zero()]), |acc, x| acc + x)
     }
 }
 
-impl <F: PrimeField>Product for UnivariatePoly<F> {
+impl<F: PrimeField> Product for UnivariatePoly<F> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(UnivariatePoly::new(vec![F::one()]), |acc, x| acc * x)
     }
 }
 
-impl <F: PrimeField>Add for UnivariatePoly<F> {
-    type Output =  UnivariatePoly<F>;
+impl<F: PrimeField> Add for UnivariatePoly<F> {
+    type Output = UnivariatePoly<F>;
 
     fn add(self, rhs: Self) -> Self::Output {
         let (mut bigger, smaller) = if self.degree() < rhs.degree() {

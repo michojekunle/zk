@@ -1,7 +1,7 @@
 use ark_bn254::Fq;
+use ark_ff::PrimeField;
 use polynomial::UnivariatePoly;
 use rand;
-use ark_ff::PrimeField;
 
 #[derive(Debug)]
 struct Point<F> {
@@ -9,7 +9,12 @@ struct Point<F> {
     y: F,
 }
 
-fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, total_shares: usize) -> Vec<Point<F>> {
+fn generate_shares<F: PrimeField>(
+    secret: i32,
+    password: i32,
+    threshold: usize,
+    total_shares: usize,
+) -> Vec<Point<F>> {
     assert!(
         threshold <= total_shares,
         "Threshold must be less than or equal to total shares"
@@ -46,7 +51,11 @@ fn generate_shares<F: PrimeField>(secret: i32, password: i32, threshold: usize, 
     shares
 }
 
-fn reconstruct_secret<F: PrimeField>(shares: &[Point<F>], password: i32, threshold: usize) -> Option<F> {
+fn reconstruct_secret<F: PrimeField>(
+    shares: &[Point<F>],
+    password: i32,
+    threshold: usize,
+) -> Option<F> {
     if shares.len() < threshold {
         return None;
     }

@@ -240,7 +240,5 @@ mod tests {
     }
 
     #[test]
-    fn test_partial_sumcheck_gkr() {
-        
-    }
+    fn test_partial_sumcheck_gkr() {}
 }
