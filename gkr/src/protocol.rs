@@ -2,17 +2,15 @@ use crate::fiat_shamir::FiatShamir;
 use crate::multilinear_poly::MultilinearPoly;
 use ark_ff::{BigInteger, PrimeField};
 use sha3::Keccak256;
-use sumcheck::{PartialVerify, PartialProve};
+use sumcheck::{PartialProve, PartialVerify};
 
-struct GKRProof {
+struct GKRProof {}
 
-}
-
-pub (crate) fn GKRProve() {
+pub(crate) fn GKRProve() {
     todo!()
 }
 
-pub (crate) fn GKRVerify() {
+pub(crate) fn GKRVerify() {
     todo!()
 }
 
@@ -21,7 +19,5 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_gkr_implementation() {
-        
-    }
+    fn test_gkr_implementation() {}
 }
