@@ -1,11 +1,11 @@
-use crate::multilinear_poly::MultilinearPoly;
+use crate::multilinear::multilinear_poly::MultilinearPoly;
+use crate::composed::product_poly::ProductPoly;
 use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SumPoly<F: PrimeField> {
     pub(crate) polys: Vec<ProductPoly<F>>,
 }
-
 
 impl<F: PrimeField> SumPoly<F> {
     pub(crate) fn new(polys: Vec<ProductPoly<F>>) -> Self {
@@ -27,7 +27,7 @@ impl<F: PrimeField> SumPoly<F> {
 mod tests {
     use super::*;
     use ark_bn254::Fr;
-    
+
     #[test]
     fn test_sum_poly() {
         // Basic sum poly tests

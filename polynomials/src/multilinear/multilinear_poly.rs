@@ -1,17 +1,17 @@
 use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct MultilinearPoly<F: PrimeField> {
-    pub(crate) n_vars: usize,
-    pub(crate) evals: Vec<F>,
+pub struct MultilinearPoly<F: PrimeField> {
+    pub n_vars: usize,
+    pub evals: Vec<F>,
 }
 
 impl<F: PrimeField> MultilinearPoly<F> {
-    pub(crate) fn new(evals: Vec<F>, n_vars: usize) -> Self {
+    pub fn new(evals: Vec<F>, n_vars: usize) -> Self {
         MultilinearPoly { evals, n_vars }
     }
 
-    pub(crate) fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
+    pub fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
         let length = self.evals.len();
         if 2_i32.pow(pos as u32 + 1u32) > length as i32 {
             panic!(
@@ -32,7 +32,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
         MultilinearPoly::new(new_evals, self.n_vars - 1)
     }
 
-    pub(crate) fn evaluate(&mut self, values: Vec<F>) -> F {
+    pub fn evaluate(&mut self, values: Vec<F>) -> F {
         for i in 0..values.len() {
             *self = self.partial_evaluate((self.n_vars - 1, values[i]));
         }
@@ -90,11 +90,11 @@ fn main() {
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
+pub mod tests {
     use super::*;
     use ark_bn254::{Fq, Fr};
 
-    pub(crate) fn to_field(input: Vec<u64>) -> Vec<Fr> {
+    pub fn to_field(input: Vec<u64>) -> Vec<Fr> {
         input.iter().map(|v| Fr::from(*v)).collect()
     }
 

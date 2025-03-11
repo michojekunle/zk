@@ -1,5 +1,5 @@
-use crate::multilinear_poly::MultilinearPoly;
-use crate::utils::{ProductPoly, SumPoly};
+use polynomials::multilinear::MultilinearPoly;
+use polynomials::composed::{SumPoly, ProductPoly};
 use ark_ff::PrimeField;
 use std::marker::PhantomData;
 

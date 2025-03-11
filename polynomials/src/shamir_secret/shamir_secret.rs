@@ -1,6 +1,6 @@
 use ark_bn254::Fq;
 use ark_ff::PrimeField;
-use polynomial::UnivariatePoly;
+use crate::univariate::univariate_poly::UnivariatePoly;
 use rand;
 
 #[derive(Debug)]

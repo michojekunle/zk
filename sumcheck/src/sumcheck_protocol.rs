@@ -1,5 +1,5 @@
 use crate::fiat_shamir::FiatShamir;
-use crate::multilinear_poly::MultilinearPoly;
+use polynomials::multilinear::multilinear_poly::MultilinearPoly;
 use ark_ff::{BigInteger, PrimeField};
 use sha3::Keccak256;
 
@@ -226,10 +226,13 @@ fn partial_verify<F: PrimeField>(
 
 #[cfg(test)]
 mod tests {
-    use crate::multilinear_poly::tests::to_field;
-    use crate::multilinear_poly::MultilinearPoly;
+    use polynomials::multilinear::multilinear_poly::MultilinearPoly;
     use crate::sumcheck_protocol::{prove, verify};
     use ark_bn254::Fr;
+
+    pub fn to_field(input: Vec<u64>) -> Vec<Fr> {
+        input.iter().map(|v| Fr::from(*v)).collect()
+    }
 
     #[test]
     fn test_sumcheck() {

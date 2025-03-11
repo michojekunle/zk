@@ -3,20 +3,20 @@ use std::iter::{Product, Sum};
 use std::ops::{Add, Mul};
 
 #[derive(Debug, PartialEq, Clone)]
-struct UnivariatePoly<F: PrimeField> {
-    coefficients: Vec<F>,
+pub (crate) struct UnivariatePoly<F: PrimeField> {
+    pub (crate) coefficients: Vec<F>,
 }
 
 impl<F: PrimeField> UnivariatePoly<F> {
-    fn new(coefficients: Vec<F>) -> Self {
+    pub (crate) fn new(coefficients: Vec<F>) -> Self {
         UnivariatePoly { coefficients }
     }
 
-    fn degree(&self) -> i32 {
+    pub (crate) fn degree(&self) -> i32 {
         self.coefficients.len() as i32 - 1
     }
 
-    fn evaluate(&self, x: F) -> F {
+    pub (crate) fn evaluate(&self, x: F) -> F {
         self.coefficients
             .iter()
             .rev()
@@ -25,14 +25,14 @@ impl<F: PrimeField> UnivariatePoly<F> {
             .unwrap()
     }
 
-    fn interpolate(xs: Vec<F>, ys: Vec<F>) -> Self {
+    pub (crate) fn interpolate(xs: Vec<F>, ys: Vec<F>) -> Self {
         xs.iter()
             .zip(ys.iter())
             .map(|(x, y)| Self::basis(x, &xs).scalar_mul(y))
             .sum()
     }
 
-    fn scalar_mul(&self, scalar: &F) -> Self {
+    pub (crate) fn scalar_mul(&self, scalar: &F) -> Self {
         UnivariatePoly {
             coefficients: self
                 .coefficients
@@ -42,7 +42,7 @@ impl<F: PrimeField> UnivariatePoly<F> {
         }
     }
 
-    fn basis(x: &F, interpolating_set: &[F]) -> Self {
+    pub (crate) fn basis(x: &F, interpolating_set: &[F]) -> Self {
         let numerator: UnivariatePoly<F> = interpolating_set
             .iter()
             .filter(|val| *val != x)

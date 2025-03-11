@@ -1,5 +1,5 @@
 use crate::fiat_shamir::FiatShamir;
-use crate::multilinear_poly::MultilinearPoly;
+use polynomials::multilinear::MultilinearPoly;
 use ark_ff::{BigInteger, PrimeField};
 use sha3::Keccak256;
 use sumcheck::{PartialProve, PartialVerify};

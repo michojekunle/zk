@@ -1,4 +1,4 @@
-use crate::multilinear_poly::MultilinearPoly;
+use crate::multilinear::multilinear_poly::MultilinearPoly;
 use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
