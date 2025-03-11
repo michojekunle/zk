@@ -137,6 +137,7 @@ mod test {
             vec![Fq::from(7)]
         );
     }
+    
     #[test]
     fn test_fibonnacci_verification() {
         let fibonacci_poly = UnivariatePoly::interpolate(
