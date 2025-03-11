@@ -5,5 +5,6 @@ edition = "2021"
 
 [dependencies]
 sumcheck = { path = "../sumcheck" }
+polynomials = { path = "../polynomials"}
 ark-bn254 = "0.5.0"
 ark-ff = "0.5.0"
