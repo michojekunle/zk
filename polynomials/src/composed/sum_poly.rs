@@ -3,16 +3,16 @@ use crate::composed::product_poly::ProductPoly;
 use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct SumPoly<F: PrimeField> {
-    pub(crate) polys: Vec<ProductPoly<F>>,
+pub struct SumPoly<F: PrimeField> {
+    pub polys: Vec<ProductPoly<F>>,
 }
 
 impl<F: PrimeField> SumPoly<F> {
-    pub(crate) fn new(polys: Vec<ProductPoly<F>>) -> Self {
+    pub fn new(polys: Vec<ProductPoly<F>>) -> Self {
         SumPoly { polys }
     }
 
-    pub(crate) fn evaluate(&mut self, values: Vec<Vec<Vec<F>>>) -> F {
+    pub fn evaluate(&mut self, values: Vec<Vec<Vec<F>>>) -> F {
         let mut sum: F = F::zero();
 
         for (i, value) in values.iter().enumerate() {

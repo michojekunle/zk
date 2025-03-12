@@ -2,16 +2,16 @@ use crate::multilinear::multilinear_poly::MultilinearPoly;
 use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ProductPoly<F: PrimeField> {
-    pub(crate) polys: Vec<MultilinearPoly<F>>,
+pub struct ProductPoly<F: PrimeField> {
+    pub polys: Vec<MultilinearPoly<F>>,
 }
 
 impl<F: PrimeField> ProductPoly<F> {
-    pub(crate) fn new(polys: Vec<MultilinearPoly<F>>) -> Self {
+    pub fn new(polys: Vec<MultilinearPoly<F>>) -> Self {
         ProductPoly { polys }
     }
 
-    pub(crate) fn partial_evaluate(&mut self, partial_evals: Vec<(usize, F)>) -> Self {
+    pub fn partial_evaluate(&mut self, partial_evals: Vec<(usize, F)>) -> Self {
         for (i, (pos, val)) in partial_evals.iter().enumerate() {
             self.polys[i] = self.polys[i].partial_evaluate((*pos, *val));
         }
@@ -19,7 +19,7 @@ impl<F: PrimeField> ProductPoly<F> {
         ProductPoly::new(self.polys.clone())
     }
 
-    pub(crate) fn evaluate(&mut self, values: Vec<Vec<F>>) -> F {
+    pub fn evaluate(&mut self, values: Vec<Vec<F>>) -> F {
         let mut product: F = F::one();
 
         for (i, value) in values.iter().enumerate() {

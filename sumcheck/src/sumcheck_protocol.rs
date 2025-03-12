@@ -3,17 +3,17 @@ use polynomials::multilinear::multilinear_poly::MultilinearPoly;
 use ark_ff::{BigInteger, PrimeField};
 use sha3::Keccak256;
 
-struct Proof<F: PrimeField> {
+pub struct Proof<F: PrimeField> {
     claimed_sum: F,
     round_polys: Vec<[F; 2]>,
 }
 
-struct PartialProof<F: PrimeField> {
+pub struct PartialProof<F: PrimeField> {
     claimed_sum: F,
     round_polys: Vec<[F; 3]>,
 }
 
-fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
+pub fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
     let mut round_polys: Vec<[F; 2]> = vec![];
 
     // public
@@ -66,7 +66,7 @@ fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
     }
 }
 
-fn partial_prove<F: PrimeField>(
+pub fn partial_prove<F: PrimeField>(
     poly: &MultilinearPoly<F>,
     claimed_sum: F,
     transcript: &mut FiatShamir<Keccak256, F>,
@@ -125,7 +125,7 @@ fn partial_prove<F: PrimeField>(
     }
 }
 
-fn verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) -> bool {
+pub fn verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) -> bool {
     if proof.round_polys.len() != poly.n_vars {
         return false;
     }
@@ -173,7 +173,7 @@ fn verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) -> boo
     true
 }
 
-fn partial_verify<F: PrimeField>(
+pub fn partial_verify<F: PrimeField>(
     proof: &PartialProof<F>,
     poly: &mut MultilinearPoly<F>,
     transcript: &mut FiatShamir<Keccak256, F>,
@@ -235,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sumcheck() {
+    pub fn test_sumcheck() {
         let mut poly = MultilinearPoly::new(to_field(vec![0, 0, 0, 3, 0, 0, 2, 5]), 3);
         let proof = prove(&poly, Fr::from(10));
 
@@ -243,5 +243,5 @@ mod tests {
     }
 
     #[test]
-    fn test_partial_sumcheck_gkr() {}
+    pub fn test_partial_sumcheck_gkr() {}
 }

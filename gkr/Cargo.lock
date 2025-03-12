@@ -448,6 +448,7 @@ dependencies = [
  "ark-bn254",
  "ark-ff",
  "polynomials",
+ "sha3",
  "sumcheck",
 ]
 

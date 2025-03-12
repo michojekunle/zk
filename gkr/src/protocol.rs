@@ -1,8 +1,8 @@
-use crate::fiat_shamir::FiatShamir;
-use polynomials::multilinear::MultilinearPoly;
+use sumcheck::fiat_shamir::FiatShamir;
+use polynomials::multilinear::multilinear_poly::MultilinearPoly;
 use ark_ff::{BigInteger, PrimeField};
 use sha3::Keccak256;
-use sumcheck::{PartialProve, PartialVerify};
+use sumcheck::sumcheck_protocol::{partial_prove, partial_verify};
 
 struct GKRProof {}
 
@@ -14,7 +14,7 @@ pub(crate) fn GKRVerify() {
     todo!()
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
     use super::*;
 

@@ -5,27 +5,27 @@ use ark_std::rand::SeedableRng;
 use digest::{Digest, FixedOutputReset};
 use std::marker::PhantomData;
 
-pub(crate) struct FiatShamir<T: Digest, F: PrimeField> {
-    pub(crate) hasher: T,
-    pub(crate) _field: PhantomData<F>,
+pub struct FiatShamir<T: Digest, F: PrimeField> {
+    pub hasher: T,
+    pub _field: PhantomData<F>,
 }
 
 impl<T: Digest + Default + FixedOutputReset, F: PrimeField> FiatShamir<T, F> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             hasher: T::new(),
             _field: PhantomData,
         }
     }
 
-    pub(crate) fn absorb(&mut self, data: &[u8]) {
+    pub fn absorb(&mut self, data: &[u8]) {
         for elem in data {
             let bytes = elem.to_le_bytes();
             Digest::update(&mut self.hasher, &bytes);
         }
     }
 
-    pub(crate) fn squeeze(&mut self) -> F {
+    pub fn squeeze(&mut self) -> F {
         let hash_result = self.hasher.finalize_reset();
         let seed: [u8; 32] = hash_result.as_slice()[..32].try_into().unwrap(); // Ensure correct size (32 bytes)
         Digest::update(&mut self.hasher, &hash_result);
@@ -33,7 +33,7 @@ impl<T: Digest + Default + FixedOutputReset, F: PrimeField> FiatShamir<T, F> {
         F::rand(&mut rng)
     }
 
-    pub(crate) fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.hasher = T::new();
     }
 }
