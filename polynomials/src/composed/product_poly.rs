@@ -11,6 +11,10 @@ impl<F: PrimeField> ProductPoly<F> {
         ProductPoly { polys }
     }
 
+    pub fn degree(&self) -> i32 {
+        self.polys.len() as i32
+    }
+
     pub fn partial_evaluate(&mut self, partial_evals: Vec<(usize, F)>) -> Self {
         for (i, (pos, val)) in partial_evals.iter().enumerate() {
             self.polys[i] = self.polys[i].partial_evaluate((*pos, *val));

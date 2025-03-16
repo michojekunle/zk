@@ -12,6 +12,18 @@ impl<F: PrimeField> SumPoly<F> {
         SumPoly { polys }
     }
 
+    pub fn degree(&self) -> i32 {
+        self.polys.len() as i32
+    }
+
+    pub fn partial_evaluate(&mut self, partial_evals: Vec<Vec<(usize, F)>>) -> Self {
+        for (i, p_evals) in partial_evals.iter().enumerate() {
+            self.polys[i] = self.polys[i].partial_evaluate(p_evals.to_vec());
+        }
+
+        SumPoly::new(self.polys.clone())
+    }
+
     pub fn evaluate(&mut self, values: Vec<Vec<Vec<F>>>) -> F {
         let mut sum: F = F::zero();
 

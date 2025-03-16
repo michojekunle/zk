@@ -1,6 +1,6 @@
-use polynomials::multilinear::multilinear_poly::MultilinearPoly;
-use polynomials::composed::{sum_poly::SumPoly, product_poly::ProductPoly};
 use ark_ff::PrimeField;
+use polynomials::composed::{product_poly::ProductPoly, sum_poly::SumPoly};
+use polynomials::multilinear::multilinear_poly::MultilinearPoly;
 use std::marker::PhantomData;
 
 #[derive(Clone, Debug)]
@@ -81,16 +81,16 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(layer_eval.to_vec(), n.try_into().unwrap())
     }
 
-    pub(crate) fn add_i(&self, layer_id: usize) -> MultilinearPoly<F> {
+    pub(crate) fn add_mul_i(&self, layer_id: usize, op: Op) -> MultilinearPoly<F> {
         let layer = &self.layers[layer_id];
         let l_i_vars = layer_id as u32;
         let l_i_plus_1_vars = layer_id as u32 + 1;
 
         let mut n_vars: usize = 0;
-        let mut add_i_evals: Vec<F> = Vec::new();
+        let mut evals: Vec<F> = Vec::new();
 
         for gate in layer {
-            if gate.op == Op::ADD {
+            if gate.op == op {
                 // Format the output, left, and right as binary strings with the specified widths
                 let output_binary = format!("{:0width$b}", gate.output, width = l_i_vars as usize);
                 let left_binary =
@@ -107,59 +107,22 @@ impl<F: PrimeField> Circuit<F> {
 
                 n_vars = eval_pow;
 
-                if add_i_evals.len() > 0 {
-                    add_i_evals[eval_true_index] = F::one();
+                if evals.len() > 0 {
+                    evals[eval_true_index] = F::one();
                 } else {
-                    add_i_evals = vec![F::zero(); 1 << eval_pow];
-                    add_i_evals[eval_true_index] = F::one();
+                    evals = vec![F::zero(); 1 << eval_pow];
+                    evals[eval_true_index] = F::one();
                 }
             }
         }
 
-        MultilinearPoly::new(add_i_evals, n_vars)
+        MultilinearPoly::new(evals, n_vars)
     }
 
-    pub(crate) fn mul_i(&self, layer_id: usize) -> MultilinearPoly<F> {
-        let layer = &self.layers[layer_id];
-        let l_i_vars = layer_id as u32;
-        let l_i_plus_1_vars = layer_id as u32 + 1;
-
-        let mut n_vars: usize = 0;
-        let mut add_i_evals: Vec<F> = Vec::new();
-
-        for gate in layer {
-            if gate.op == Op::MUL {
-                // Format the output, left, and right as binary strings with the specified widths
-                let output_binary = format!("{:0width$b}", gate.output, width = l_i_vars as usize);
-                let left_binary =
-                    format!("{:0width$b}", gate.left, width = l_i_plus_1_vars as usize);
-                let right_binary =
-                    format!("{:0width$b}", gate.right, width = l_i_plus_1_vars as usize);
-
-                // Combine the binary strings
-                let combined_binary = format!("{}{}{}", output_binary, left_binary, right_binary);
-                let eval_pow = combined_binary.len();
-
-                // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
-                let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
-
-                n_vars = eval_pow;
-
-                if add_i_evals.len() > 0 {
-                    add_i_evals[eval_true_index] = F::one();
-                } else {
-                    add_i_evals = vec![F::zero(); 1 << eval_pow];
-                    add_i_evals[eval_true_index] = F::one();
-                }
-            }
-        }
-
-        MultilinearPoly::new(add_i_evals, n_vars)
-    }
-
-    pub(crate) fn w_add(
+    pub(crate) fn w_add_mul(
         poly_1: &MultilinearPoly<F>,
         poly_2: &MultilinearPoly<F>,
+        op: Op,
     ) -> MultilinearPoly<F> {
         let new_nvars = poly_1.n_vars + poly_2.n_vars;
         let mut new_evals = vec![F::zero(); 1 << new_nvars];
@@ -171,41 +134,25 @@ impl<F: PrimeField> Circuit<F> {
                     2,
                 )
                 .unwrap();
-                new_evals[new_evals_i] = poly_1.evals[i] + poly_2.evals[j];
+                if op == Op::ADD {
+                    new_evals[new_evals_i] = poly_1.evals[i] + poly_2.evals[j]
+                } else if op == Op::MUL {
+                    new_evals[new_evals_i] = poly_1.evals[i] * poly_2.evals[j]
+                };
             }
         }
 
         MultilinearPoly::new(new_evals, new_nvars)
     }
 
-    pub(crate) fn w_mul(
-        poly_1: &MultilinearPoly<F>,
-        poly_2: &MultilinearPoly<F>,
-    ) -> MultilinearPoly<F> {
-        let new_nvars = poly_1.n_vars + poly_2.n_vars;
-        let mut new_evals = vec![F::zero(); 1 << new_nvars];
-
-        for i in 0..poly_1.evals.len() {
-            for j in 0..poly_2.evals.len() {
-                let new_evals_i = usize::from_str_radix(
-                    &format!("{:0width$b}{:0width$b}", i, j, width = poly_1.n_vars),
-                    2,
-                )
-                .unwrap();
-                new_evals[new_evals_i] = poly_1.evals[i] * poly_2.evals[j];
-            }
-        }
-
-        MultilinearPoly::new(new_evals, new_nvars)
-    }
 
     pub(crate) fn generate_fbc(
         add_i: MultilinearPoly<F>,
         mul_i: MultilinearPoly<F>,
         w_i_plus_1: MultilinearPoly<F>,
     ) -> SumPoly<F> {
-        let w_add_bc = Self::w_add(&w_i_plus_1, &w_i_plus_1);
-        let w_mul_bc = Self::w_mul(&w_i_plus_1, &w_i_plus_1);
+        let w_add_bc = Self::w_add_mul(&w_i_plus_1, &w_i_plus_1, Op::ADD);
+        let w_mul_bc = Self::w_add_mul(&w_i_plus_1, &w_i_plus_1, Op::MUL);
         let mut product_polys: Vec<ProductPoly<F>> = Vec::new();
 
         product_polys.push(ProductPoly::new(vec![add_i, w_add_bc]));
@@ -302,9 +249,9 @@ mod tests {
 
         let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
 
-        let circuit_add_0 = circuit.add_i(0);
-        let circuit_add_1 = circuit.add_i(1);
-        let circuit_add_2 = circuit.add_i(2);
+        let circuit_add_0 = circuit.add_mul_i(0, Op::ADD);
+        let circuit_add_1 = circuit.add_mul_i(1, Op::ADD);
+        let circuit_add_2 = circuit.add_mul_i(2, Op::ADD);
 
         assert!(
             circuit_add_0.evals.len() == 8,
@@ -336,9 +283,9 @@ mod tests {
 
         let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
 
-        let circuit_mul_0 = circuit.mul_i(0);
-        let circuit_mul_1 = circuit.mul_i(1);
-        let circuit_mul_2 = circuit.mul_i(2);
+        let circuit_mul_0 = circuit.add_mul_i(0, Op::MUL);
+        let circuit_mul_1 = circuit.add_mul_i(1, Op::MUL);
+        let circuit_mul_2 = circuit.add_mul_i(2, Op::MUL);
 
         assert!(
             circuit_mul_0.evals.len() == 0,
@@ -374,8 +321,8 @@ mod tests {
         let poly1 = MultilinearPoly::new(vec![Fr::from(1u64), Fr::from(2u64)], 1);
         let poly2 = MultilinearPoly::new(vec![Fr::from(3u64), Fr::from(4u64)], 1);
 
-        let result = Circuit::<Fr>::w_add(&poly1, &poly2);
-        let result_2 = Circuit::<Fr>::w_add(&result, &result);
+        let result = Circuit::<Fr>::w_add_mul(&poly1, &poly2, Op::ADD);
+        let result_2 = Circuit::<Fr>::w_add_mul(&result, &result, Op::ADD);
 
         // Result should have n_vars = 2 and 2^2 = 4 evaluations
         assert_eq!(result.n_vars, 2);
@@ -418,8 +365,8 @@ mod tests {
         let poly1 = MultilinearPoly::new(vec![Fr::from(1u64), Fr::from(2u64)], 1);
         let poly2 = MultilinearPoly::new(vec![Fr::from(3u64), Fr::from(4u64)], 1);
 
-        let result = Circuit::<Fr>::w_mul(&poly1, &poly2);
-        let result_2 = Circuit::<Fr>::w_mul(&result, &result);
+        let result = Circuit::<Fr>::w_add_mul(&poly1, &poly2, Op::MUL);
+        let result_2 = Circuit::<Fr>::w_add_mul(&result, &result, Op::MUL);
 
         // Result should have n_vars = 2 and 2^2 = 4 evaluations
         assert_eq!(result.n_vars, 2);

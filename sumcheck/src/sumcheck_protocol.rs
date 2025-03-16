@@ -8,9 +8,11 @@ pub struct Proof<F: PrimeField> {
     round_polys: Vec<[F; 2]>,
 }
 
+#[derive(Clone, Debug)]
 pub struct PartialProof<F: PrimeField> {
-    claimed_sum: F,
+    initial_claimed_sum: F,
     round_polys: Vec<[F; 3]>,
+    rand_challenges: Vec<F>
 }
 
 pub fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {
@@ -120,8 +122,9 @@ pub fn partial_prove<F: PrimeField>(
     }
 
     PartialProof {
-        claimed_sum,
+        initial_claimed_sum: claimed_sum,
         round_polys,
+        rand_challenges: vec![]
     }
 }
 
@@ -175,26 +178,25 @@ pub fn verify<F: PrimeField>(proof: &Proof<F>, poly: &mut MultilinearPoly<F>) ->
 
 pub fn partial_verify<F: PrimeField>(
     proof: &PartialProof<F>,
-    poly: &mut MultilinearPoly<F>,
     transcript: &mut FiatShamir<Keccak256, F>,
 ) -> (Vec<F>, F) {
-    if proof.round_polys.len() != poly.n_vars {
-        return (vec![], F::zero());
-    }
+    // if proof.round_polys.len() != poly.n_vars {
+    //     return (vec![], F::zero());
+    // }
 
     let mut challenges = vec![];
 
-    transcript.absorb(
-        poly.evals
-            .iter()
-            .flat_map(|f| f.into_bigint().to_bytes_be())
-            .collect::<Vec<_>>()
-            .as_slice(),
-    );
+    // transcript.absorb(
+    //     poly.evals
+    //         .iter()
+    //         .flat_map(|f| f.into_bigint().to_bytes_be())
+    //         .collect::<Vec<_>>()
+    //         .as_slice(),
+    // );
 
-    transcript.absorb(proof.claimed_sum.into_bigint().to_bytes_be().as_slice());
+    transcript.absorb(proof.initial_claimed_sum.into_bigint().to_bytes_be().as_slice());
 
-    let mut claimed_sum = proof.claimed_sum;
+    let mut claimed_sum = proof.initial_claimed_sum;
 
     for round_poly in &proof.round_polys {
         if claimed_sum != round_poly.iter().sum() {
