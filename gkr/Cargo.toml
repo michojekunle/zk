@@ -8,4 +8,5 @@ sumcheck = { path = "../sumcheck" }
 polynomials = { path = "../polynomials"}
 ark-bn254 = "0.5.0"
 ark-ff = "0.5.0"
+ark-ec = "0.5.0"
 sha3 = "0.10.8"
