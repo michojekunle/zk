@@ -1,4 +1,4 @@
-use ark_ff::PrimeField;
+use ark_ff::{BigInteger, PrimeField};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultilinearPoly<F: PrimeField> {
@@ -23,7 +23,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
         let mut new_evals = vec![F::zero(); (&length / 2).try_into().unwrap()];
 
         let unique_pairs_evals = Self::get_unique_pairs_evals(self.evals.clone(), pos);
-        println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
+        // println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
 
         for (i, (c_i, c_pair_index)) in unique_pairs_evals.iter().enumerate() {
             new_evals[i] = *c_i + val * (*c_pair_index - c_i);
@@ -39,6 +39,16 @@ impl<F: PrimeField> MultilinearPoly<F> {
         self.evals[0]
     }
 
+    pub fn to_bytes(&self) -> Vec<u8> {
+        // Convert evaluation points to a serializable format (e.g., bytes)
+        let serializable_points: Vec<u8> = self
+            .evals
+            .iter()
+            .flat_map(|point| point.into_bigint().to_bytes_le())
+            .collect();
+        serializable_points
+    }
+
     fn get_unique_pairs_evals(arr: Vec<F>, pos: usize) -> Vec<(F, F)> {
         let mask = 1 << pos; // Mask for the current bit position
         let mut evals = Vec::new(); // To store unique pair evals
@@ -48,10 +58,10 @@ impl<F: PrimeField> MultilinearPoly<F> {
 
             // Only process unique pairs (avoid duplicates)
             if i < pair {
-                println!(
-                    "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
-                    i, pair, arr[i], arr[pair]
-                );
+                // println!(
+                //     "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
+                //     i, pair, arr[i], arr[pair]
+                // );
                 evals.push((arr[i], arr[pair])); // Store evals as pairs
             }
         }
@@ -70,10 +80,10 @@ fn main() {
 
             // Only process unique pairs (avoid duplicates)
             if i < pair {
-                println!(
-                    "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
-                    i, pair, arr[i], arr[pair]
-                );
+                // println!(
+                //     "Unique Pair: (i={}, pair={}) -> Values: ({}, {})",
+                //     i, pair, arr[i], arr[pair]
+                // );
                 evals.push((arr[i], arr[pair])); // Store evals as pairs
             }
         }
@@ -86,7 +96,7 @@ fn main() {
     let pos = 1;
 
     let unique_pairs_evals = get_unique_pairs_evals(arr, pos);
-    println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
+    // println!("evals of Unique Pairs: {:?}", unique_pairs_evals);
 }
 
 #[cfg(test)]

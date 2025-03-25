@@ -1,6 +1,7 @@
 use crate::multilinear::multilinear_poly::MultilinearPoly;
 use crate::composed::product_poly::ProductPoly;
 use ark_ff::PrimeField;
+use std::iter;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SumPoly<F: PrimeField> {
@@ -16,22 +17,63 @@ impl<F: PrimeField> SumPoly<F> {
         self.polys.len() as i32
     }
 
-    pub fn partial_evaluate(&mut self, partial_evals: Vec<Vec<(usize, F)>>) -> Self {
-        for (i, p_evals) in partial_evals.iter().enumerate() {
-            self.polys[i] = self.polys[i].partial_evaluate(p_evals.to_vec());
+    pub fn partial_evaluate(&mut self, partial_eval: (usize, F)) -> Self {
+        let deg: usize = self.degree().try_into().unwrap();
+
+        for i in 0..deg {
+            self.polys[i] = self.polys[i].partial_evaluate(partial_eval);
         }
 
         SumPoly::new(self.polys.clone())
     }
 
-    pub fn evaluate(&mut self, values: Vec<Vec<Vec<F>>>) -> F {
+    pub fn evaluate(&mut self, values: Vec<F>) -> F {
         let mut sum: F = F::zero();
+        let deg: usize = self.degree().try_into().unwrap();
 
-        for (i, value) in values.iter().enumerate() {
-            let eval = self.polys[i].evaluate(value.to_vec());
+        for i in 0..deg {
+            let eval = self.polys[i].evaluate(values.to_vec());
             sum += eval;
         }
         sum
+    }
+
+    pub fn reduce(&self) -> Vec<F> {
+        let general_poly_length = self.length();
+        let reduced_product_polys: Vec<Vec<F>> =
+            self.polys.iter().map(|poly| poly.reduce()).collect();
+
+        let res = iter::repeat(())
+            .enumerate()
+            .map(|(index, _)| {
+                let mut running_idx_sum = F::zero();
+
+                reduced_product_polys.iter().for_each(|poly| {
+                    running_idx_sum += poly[index];
+                });
+
+                running_idx_sum
+            })
+            .take(general_poly_length)
+            .collect();
+
+        res
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.polys.iter().flat_map(|poly| poly.to_bytes()).collect()
+    }
+    
+    pub fn get_poly_length(polys: &[ProductPoly<F>]) -> usize {
+        polys.first().unwrap().length()
+    }
+
+    pub fn length(&self) -> usize {
+        Self::get_poly_length(&self.polys)
+    }
+
+    pub fn n_vars(&self) -> u32 {
+        self.length().ilog2()
     }
 }
 
@@ -57,10 +99,7 @@ mod tests {
         assert_eq!(sum_poly.polys.len(), 2);
 
         // Test evaluation
-        let values = vec![
-            vec![vec![Fr::from(1)], vec![Fr::from(1)]], // For first product poly
-            vec![vec![Fr::from(1)], vec![Fr::from(1)]], // For second product poly
-        ];
+        let values = vec![Fr::from(1)];
         let result = sum_poly.evaluate(values);
         // First product evaluates to 8 (2*4)
         // Second product evaluates to 48 (6*8)
@@ -87,7 +126,7 @@ mod tests {
         let prod = ProductPoly::new(vec![poly1]);
         let mut sum_poly = SumPoly::new(vec![prod]);
 
-        let values = vec![vec![vec![Fr::from(1)]]];
+        let values = vec![Fr::from(1)];
         let result = sum_poly.evaluate(values);
         assert_eq!(result, Fr::from(3)); // Should evaluate to 3 when x=1
     }
@@ -112,11 +151,7 @@ mod tests {
 
         let mut sum_poly = SumPoly::new(vec![prod1, prod2, prod3]);
 
-        let values = vec![
-            vec![vec![Fr::from(1)]],
-            vec![vec![Fr::from(1)]],
-            vec![vec![Fr::from(1)]],
-        ];
+        let values = vec![Fr::from(1)];
 
         let result = sum_poly.evaluate(values);
         // When x=1: 2 + 4 + 6 = 12

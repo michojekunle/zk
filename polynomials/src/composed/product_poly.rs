@@ -1,5 +1,6 @@
 use crate::multilinear::multilinear_poly::MultilinearPoly;
 use ark_ff::PrimeField;
+use std::iter;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProductPoly<F: PrimeField> {
@@ -15,23 +16,59 @@ impl<F: PrimeField> ProductPoly<F> {
         self.polys.len() as i32
     }
 
-    pub fn partial_evaluate(&mut self, partial_evals: Vec<(usize, F)>) -> Self {
-        for (i, (pos, val)) in partial_evals.iter().enumerate() {
-            self.polys[i] = self.polys[i].partial_evaluate((*pos, *val));
+    pub fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
+        let deg: usize = self.degree().try_into().unwrap();
+
+        for i in 0..deg {
+            self.polys[i] = self.polys[i].partial_evaluate((pos, val));
         }
 
         ProductPoly::new(self.polys.clone())
     }
 
-    pub fn evaluate(&mut self, values: Vec<Vec<F>>) -> F {
+    pub fn evaluate(&mut self, values: Vec<F>) -> F {
         let mut product: F = F::one();
+        let deg: usize = self.degree().try_into().unwrap();
 
-        for (i, value) in values.iter().enumerate() {
-            let eval = self.polys[i].evaluate(value.to_vec());
+        for i in 0..deg {
+            let eval = self.polys[i].evaluate(values.to_vec());
             product *= eval;
         }
 
         product
+    }
+
+    pub fn reduce(&self) -> Vec<F> {
+        // perform element wise product on each multilinear polynomial
+        let general_poly_length = self.length();
+
+        let res = iter::repeat(())
+            .enumerate()
+            .map(|(index, _)| {
+                let mut running_idx_prod = F::one();
+
+                self.polys.iter().for_each(|poly| {
+                    running_idx_prod *= poly.evals[index];
+                });
+
+                running_idx_prod
+            })
+            .take(general_poly_length)
+            .collect();
+
+        res
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.polys.iter().flat_map(|poly| poly.to_bytes()).collect()
+    }
+
+    pub fn get_poly_length(polys: &Vec<MultilinearPoly<F>>) -> usize {
+        polys.first().unwrap().evals.len()
+    }
+
+    pub fn length(&self) -> usize {
+        Self::get_poly_length(&self.polys)
     }
 }
 
@@ -55,7 +92,7 @@ mod tests {
         let poly2 = MultilinearPoly::new(vec![Fr::from(3), Fr::from(4)], 1);
         let mut product_poly = ProductPoly::new(vec![poly1, poly2]);
 
-        let partial_evals = vec![(0, Fr::from(1)), (0, Fr::from(1))];
+        let partial_evals = (0, Fr::from(1));
         let evaluated = product_poly.partial_evaluate(partial_evals);
 
         assert_eq!(evaluated.polys.len(), 2);
@@ -67,7 +104,7 @@ mod tests {
         let poly2 = MultilinearPoly::new(vec![Fr::from(3), Fr::from(4)], 1);
         let mut product_poly = ProductPoly::new(vec![poly1, poly2]);
 
-        let values = vec![vec![Fr::from(1)], vec![Fr::from(1)]];
+        let values = vec![Fr::from(1)];
         let result = product_poly.evaluate(values);
 
         // Result should be 2 * 4 = 8 when evaluating at x = 1
@@ -83,7 +120,7 @@ mod tests {
         let mut product_poly = ProductPoly::new(polys);
         assert_eq!(product_poly.polys.len(), 3);
 
-        let values = vec![vec![Fr::from(1)]; 3];
+        let values = vec![Fr::from(1)];
         let result = product_poly.evaluate(values);
         // Result should be 1 * 2 * 3 = 6 when evaluating at x = 1
         assert_eq!(result, Fr::from(6));

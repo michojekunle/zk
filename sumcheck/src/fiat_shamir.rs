@@ -25,6 +25,10 @@ impl<T: Digest + Default + FixedOutputReset, F: PrimeField> FiatShamir<T, F> {
         }
     }
 
+    pub fn absorb_n(&mut self, data: &[&[u8]]) {
+        data.iter().for_each(|f| self.absorb(*f));
+    }
+
     pub fn squeeze(&mut self) -> F {
         let hash_result = self.hasher.finalize_reset();
         let seed: [u8; 32] = hash_result.as_slice()[..32].try_into().unwrap(); // Ensure correct size (32 bytes)
