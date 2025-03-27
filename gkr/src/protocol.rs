@@ -8,8 +8,8 @@ use std::marker::PhantomData;
 
 pub struct GKRProof<F: PrimeField> {
     pub output_poly: MultilinearPoly<F>,
-    pub sumcheck_proofs: Vec<PartialProof<F>>,
     pub w_poly_evals: Vec<(F, F)>,
+    pub sumcheck_proofs: Vec<PartialProof<F>>,
 }
 
 pub struct GKRProofWithKZG<F: PrimeField, P: Pairing> {
@@ -20,13 +20,13 @@ pub struct GKRProofWithKZG<F: PrimeField, P: Pairing> {
 impl<F: PrimeField> GKRProof<F> {
     pub fn new(
         output_poly: MultilinearPoly<F>,
-        sumcheck_proofs: Vec<PartialProof<F>>,
         w_poly_evals: Vec<(F, F)>,
+        sumcheck_proofs: Vec<PartialProof<F>>,
     ) -> Self {
         Self {
             output_poly,
-            sumcheck_proofs,
             w_poly_evals,
+            sumcheck_proofs,
         }
     }
 }

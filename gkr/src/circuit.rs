@@ -2,6 +2,7 @@ use ark_ff::PrimeField;
 use polynomials::composed::{product_poly::ProductPoly, sum_poly::SumPoly};
 use polynomials::multilinear::multilinear_poly::MultilinearPoly;
 use std::marker::PhantomData;
+use std::cmp::max;
 
 #[derive(Clone, Debug)]
 pub(crate) struct Gate {
@@ -12,7 +13,7 @@ pub(crate) struct Gate {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Op {
+pub enum Op {
     ADD,
     MUL,
 }
@@ -48,7 +49,7 @@ impl<F: PrimeField> Circuit<F> {
         for layer in self.layers.clone().into_iter().rev() {
             // dbg!(&layer);
             let prev_layer = layer_outputs.last().unwrap();
-            let mut current_outputs = vec![F::zero(); prev_layer.len() / 2];
+            let mut current_outputs = vec![F::zero();  max(prev_layer.len() / 2, 2) as usize];
 
             for gate in layer {
                 // dbg!(&gate);
@@ -145,7 +146,6 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(new_evals, new_nvars)
     }
 
-
     pub(crate) fn generate_fbc(
         add_i: MultilinearPoly<F>,
         mul_i: MultilinearPoly<F>,
@@ -159,6 +159,10 @@ impl<F: PrimeField> Circuit<F> {
         product_polys.push(ProductPoly::new(vec![mul_i, w_mul_bc]));
 
         SumPoly::new(product_polys)
+    }
+
+    pub(crate) fn get_layer_count(&self) -> usize {
+        self.layers.len()
     }
 }
 
@@ -228,7 +232,7 @@ mod tests {
         let layer_1_poly = circuit.get_layer_poly(1, input.clone());
         let layer_2_poly = circuit.get_layer_poly(2, input);
 
-        assert_eq!(layer_0_poly.evals.len(), 1);
+        assert_eq!(layer_0_poly.evals.len(), 2);
         assert_eq!(layer_1_poly.evals.len(), 2);
         assert_eq!(layer_2_poly.evals.len(), 4);
     }

@@ -8,8 +8,8 @@ use sumcheck::{fiat_shamir::FiatShamir, sumcheck_protocol::partial_verify};
 use crate::protocol::{GKRProof, GKRProofWithKZG};
 
 pub struct GKRVerifier<F: PrimeField, P: Pairing> {
-    _marker: PhantomData<F>,
-    _marker_p: PhantomwData<P>
+    _phantom: PhantomData<F>,
+    _phantom_p: PhantomData<P>
 }
 
 impl <F: PrimeField, P: Pairing> GKRVerifier<F, P> {
