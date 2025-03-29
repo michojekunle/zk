@@ -10,9 +10,9 @@ pub struct Proof<F: PrimeField> {
 
 #[derive(Clone, Debug)]
 pub struct PartialProof<F: PrimeField> {
-    initial_claimed_sum: F,
-    round_polys: Vec<[F; 3]>,
-    rand_challenges: Vec<F>,
+    pub initial_claimed_sum: F,
+    pub round_polys: Vec<[F; 3]>,
+    pub rand_challenges: Vec<F>,
 }
 
 pub fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<F> {

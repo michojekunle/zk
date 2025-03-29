@@ -149,10 +149,10 @@ impl<F: PrimeField> Circuit<F> {
     pub(crate) fn generate_fbc(
         add_i: MultilinearPoly<F>,
         mul_i: MultilinearPoly<F>,
-        w_i_plus_1: MultilinearPoly<F>,
+        w_i_plus_1: &MultilinearPoly<F>,
     ) -> SumPoly<F> {
-        let w_add_bc = Self::w_add_mul(&w_i_plus_1, &w_i_plus_1, Op::ADD);
-        let w_mul_bc = Self::w_add_mul(&w_i_plus_1, &w_i_plus_1, Op::MUL);
+        let w_add_bc = Self::w_add_mul(w_i_plus_1, w_i_plus_1, Op::ADD);
+        let w_mul_bc = Self::w_add_mul(w_i_plus_1, w_i_plus_1, Op::MUL);
         let mut product_polys: Vec<ProductPoly<F>> = Vec::new();
 
         product_polys.push(ProductPoly::new(vec![add_i, w_add_bc]));
