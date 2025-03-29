@@ -1,8 +1,8 @@
 use ark_ff::PrimeField;
 use polynomials::composed::{product_poly::ProductPoly, sum_poly::SumPoly};
 use polynomials::multilinear::multilinear_poly::MultilinearPoly;
-use std::marker::PhantomData;
 use std::cmp::max;
+use std::marker::PhantomData;
 
 #[derive(Clone, Debug)]
 pub(crate) struct Gate {
@@ -49,7 +49,7 @@ impl<F: PrimeField> Circuit<F> {
         for layer in self.layers.clone().into_iter().rev() {
             // dbg!(&layer);
             let prev_layer = layer_outputs.last().unwrap();
-            let mut current_outputs = vec![F::zero();  max(prev_layer.len() / 2, 2) as usize];
+            let mut current_outputs = vec![F::zero(); max(prev_layer.len() / 2, 2) as usize];
 
             for gate in layer {
                 // dbg!(&gate);

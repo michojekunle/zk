@@ -83,7 +83,7 @@ impl<F: PrimeField, P: Pairing> GKRProver<F, P> {
                     (
                         get_folded_claim_sum(&alpha, &beta, &w_i_b_eval, &w_i_c_eval),
                         new_muli_b_c,
-                        new_addi_b_c
+                        new_addi_b_c,
                     )
                 }
             };
@@ -94,7 +94,11 @@ impl<F: PrimeField, P: Pairing> GKRProver<F, P> {
 
             let sumcheck_proof = partial_prove(&f_bc, claimed_sum, transcript);
 
-            random_values = sumcheck_proof.rand_challenges.iter().map(|chal| *chal).collect();
+            random_values = sumcheck_proof
+                .rand_challenges
+                .iter()
+                .map(|chal| *chal)
+                .collect();
             running_layer_poly = next_w_i;
 
             sumcheck_proofs.push(sumcheck_proof);

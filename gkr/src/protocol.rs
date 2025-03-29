@@ -1,10 +1,10 @@
+use ark_ec::pairing::Pairing;
 use ark_ff::{BigInteger, PrimeField};
 use polynomials::multilinear::multilinear_poly::MultilinearPoly;
 use sha3::Keccak256;
+use std::marker::PhantomData;
 use sumcheck::fiat_shamir::FiatShamir;
 use sumcheck::sumcheck_protocol::{partial_prove, partial_verify, PartialProof};
-use ark_ec::pairing::Pairing;
-use std::marker::PhantomData;
 
 pub struct GKRProof<F: PrimeField> {
     pub output_poly: MultilinearPoly<F>,
