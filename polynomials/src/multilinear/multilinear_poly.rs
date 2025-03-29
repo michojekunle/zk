@@ -1,4 +1,5 @@
 use ark_ff::{BigInteger, PrimeField};
+use std::ops::Add;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultilinearPoly<F: PrimeField> {
@@ -69,6 +70,30 @@ impl<F: PrimeField> MultilinearPoly<F> {
             }
         }
         evals
+    }
+
+     // Adds two polynomials of same variables together
+     pub fn _add(&self, other: &MultilinearPoly<F>) -> Self {
+        if self.n_vars != other.n_vars {
+            panic!("Polynomial must have the same length");
+        };
+
+        let mut new_evals = vec![F::zero(); other.evals.len()];
+
+        (0..self.evals.len()).for_each(|idx| {
+            new_evals[idx] +=
+                self.evals[idx] + other.evals[idx];
+        });
+
+        Self::new(new_evals, self.n_vars)
+    }
+}
+
+impl<F: PrimeField> Add for MultilinearPoly<F> {
+    type Output = Self;
+
+    fn add(self, other: MultilinearPoly<F>) -> Self {
+        self._add(&other)
     }
 }
 
