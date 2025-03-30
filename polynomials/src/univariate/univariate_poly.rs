@@ -1,22 +1,22 @@
-use ark_ff::PrimeField;
+use ark_ff::{PrimeField, BigInteger};
 use std::iter::{Product, Sum};
 use std::ops::{Add, Mul};
 
 #[derive(Debug, PartialEq, Clone)]
-pub (crate) struct UnivariatePoly<F: PrimeField> {
-    pub (crate) coefficients: Vec<F>,
+pub struct UnivariatePoly<F: PrimeField> {
+    pub coefficients: Vec<F>,
 }
 
 impl<F: PrimeField> UnivariatePoly<F> {
-    pub (crate) fn new(coefficients: Vec<F>) -> Self {
+    pub fn new(coefficients: Vec<F>) -> Self {
         UnivariatePoly { coefficients }
     }
 
-    pub (crate) fn degree(&self) -> i32 {
+    pub fn degree(&self) -> i32 {
         self.coefficients.len() as i32 - 1
     }
 
-    pub (crate) fn evaluate(&self, x: F) -> F {
+    pub fn evaluate(&self, x: F) -> F {
         self.coefficients
             .iter()
             .rev()
@@ -25,14 +25,20 @@ impl<F: PrimeField> UnivariatePoly<F> {
             .unwrap()
     }
 
-    pub (crate) fn interpolate(xs: Vec<F>, ys: Vec<F>) -> Self {
+    pub fn interpolate(xs: Vec<F>, ys: Vec<F>) -> Self {
         xs.iter()
             .zip(ys.iter())
             .map(|(x, y)| Self::basis(x, &xs).scalar_mul(y))
             .sum()
     }
 
-    pub (crate) fn scalar_mul(&self, scalar: &F) -> Self {
+    pub fn evaluate_sum_over_boolean_hypercube(&self) -> F {
+        let sum = self.evaluate(F::zero()) + self.evaluate(F::one());
+
+        sum
+    }
+
+    pub fn scalar_mul(&self, scalar: &F) -> Self {
         UnivariatePoly {
             coefficients: self
                 .coefficients
@@ -42,7 +48,7 @@ impl<F: PrimeField> UnivariatePoly<F> {
         }
     }
 
-    pub (crate) fn basis(x: &F, interpolating_set: &[F]) -> Self {
+    pub fn basis(x: &F, interpolating_set: &[F]) -> Self {
         let numerator: UnivariatePoly<F> = interpolating_set
             .iter()
             .filter(|val| *val != x)
@@ -52,6 +58,16 @@ impl<F: PrimeField> UnivariatePoly<F> {
         let denominator = F::one() / numerator.evaluate(*x);
 
         numerator.scalar_mul(&denominator)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let serializable_points: Vec<u8> = self
+            .coefficients
+            .iter()
+            .flat_map(|point| point.into_bigint().to_bytes_le())
+            .collect();
+
+        serializable_points
     }
 }
 
@@ -137,7 +153,7 @@ mod test {
             vec![Fq::from(7)]
         );
     }
-    
+
     #[test]
     fn test_fibonnacci_verification() {
         let fibonacci_poly = UnivariatePoly::interpolate(

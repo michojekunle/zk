@@ -50,10 +50,13 @@ impl<F: PrimeField> MultilinearPoly<F> {
     pub fn evaluate(&mut self, values: Vec<F>) -> F {
         // dbg!(&values);
         for i in 0..values.len() {
+            // dbg!(&i);
             // dbg!(&self.n_vars);
             // dbg!(&self.evals);
             *self = self.partial_evaluate((self.n_vars - 1, values[i]));
         }
+
+        // dbg!(&self);
         self.evals[0]
     }
 

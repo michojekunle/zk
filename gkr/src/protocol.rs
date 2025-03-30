@@ -74,5 +74,10 @@ mod tests {
         let mut transcript = FiatShamir::<Keccak256, Fq>::new();
 
         let gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript);
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript, gkr_proof);
+
+        dbg!(is_verified);
+
+
     }
 }

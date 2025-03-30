@@ -1,4 +1,3 @@
-use crate::multilinear::multilinear_poly::MultilinearPoly;
 use crate::composed::product_poly::ProductPoly;
 use ark_ff::PrimeField;
 use std::iter;

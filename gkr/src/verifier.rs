@@ -10,12 +10,11 @@ use sha3::Keccak256;
 use std::marker::PhantomData;
 use sumcheck::{fiat_shamir::FiatShamir, sumcheck_protocol::partial_verify};
 
-pub struct GKRVerifier<F: PrimeField, P: Pairing> {
+pub struct GKRVerifier<F: PrimeField> {
     _phantom: PhantomData<F>,
-    _phantom_p: PhantomData<P>,
 }
 
-impl<F: PrimeField, P: Pairing> GKRVerifier<F, P> {
+impl<F: PrimeField> GKRVerifier<F> {
     pub fn verify(
         input_layer: &[F],
         circuit: &mut Circuit<F>,
@@ -56,6 +55,12 @@ impl<F: PrimeField, P: Pairing> GKRVerifier<F, P> {
             let (challenges, claimed_sum) =
                 partial_verify(&proof.sumcheck_proofs[layer_i], transcript);
 
+            dbg!(&challenges);
+            dbg!(&new_muli_b_c);
+            dbg!(&new_addi_b_c);
+            dbg!(&new_addi_b_c.evaluate(challenges.to_vec()));
+            dbg!(&new_muli_b_c.evaluate(challenges.to_vec()));
+
             let (new_muli_b_c_eval, new_addi_b_c_eval) = (
                 new_muli_b_c.evaluate(challenges.to_vec()),
                 new_addi_b_c.evaluate(challenges.to_vec()),
@@ -81,11 +86,18 @@ impl<F: PrimeField, P: Pairing> GKRVerifier<F, P> {
                 &next_w_i_b_eval.into_bigint().to_bytes_le(),
                 &next_w_i_c_eval.into_bigint().to_bytes_le(),
             ]);
+            
+            dbg!(&new_addi_b_c_eval);
+            dbg!(&new_muli_b_c_eval);
 
             let fbc_eval = (new_addi_b_c_eval * (next_w_i_b_eval + next_w_i_c_eval))
                 + (new_muli_b_c_eval * (next_w_i_b_eval * next_w_i_c_eval));
 
             if fbc_eval != claimed_sum {
+                println!("Invalid intermediate claim_sum");
+                println!("Sums are fbc_eval: {} and claimed_sum: {}", fbc_eval, claimed_sum);
+                println!("This occured in layer {} of {} layers", layer_i, layer_count);
+
                 return false;
             }
 

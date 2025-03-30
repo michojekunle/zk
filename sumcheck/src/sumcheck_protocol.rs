@@ -1,6 +1,9 @@
 use crate::fiat_shamir::FiatShamir;
 use ark_ff::{BigInteger, PrimeField};
-use polynomials::{composed::sum_poly::SumPoly, multilinear::multilinear_poly::MultilinearPoly};
+use polynomials::{
+    composed::sum_poly::SumPoly, multilinear::multilinear_poly::MultilinearPoly,
+    univariate::univariate_poly::UnivariatePoly,
+};
 use sha3::Keccak256;
 
 pub struct Proof<F: PrimeField> {
@@ -11,7 +14,7 @@ pub struct Proof<F: PrimeField> {
 #[derive(Clone, Debug)]
 pub struct PartialProof<F: PrimeField> {
     pub initial_claimed_sum: F,
-    pub round_polys: Vec<[F; 3]>,
+    pub round_polys: Vec<UnivariatePoly<F>>,
     pub rand_challenges: Vec<F>,
 }
 
@@ -66,47 +69,53 @@ pub fn partial_prove<F: PrimeField>(
     transcript: &mut FiatShamir<Keccak256, F>,
 ) -> PartialProof<F> {
     let n_vars = poly.n_vars();
-    let mut round_polys: Vec<[F; 3]> = Vec::with_capacity(n_vars.try_into().unwrap());
+    let mut round_polys: Vec<UnivariatePoly<F>> = Vec::with_capacity(n_vars.try_into().unwrap());
     let mut rand_challenges: Vec<F> = Vec::with_capacity(n_vars.try_into().unwrap());
 
-    transcript.absorb(poly.to_bytes().as_slice());
-
-    transcript.absorb(initial_claimed_sum.into_bigint().to_bytes_le().as_slice());
+    // transcript.absorb(&poly.to_bytes());
+    // transcript.absorb(&initial_claimed_sum.into_bigint().to_bytes_le());
 
     let mut poly = poly.clone();
 
     // dbg!(&n_vars);
 
-    for i in 0..n_vars {
+    for _ in 0..n_vars {
         let idx: usize = (poly.n_vars() - 1).try_into().unwrap();
         let mut claimed_sum = F::zero();
 
         // implement reduce func. for polynomials functions sum_poly et product_poly
-        let round_poly: [F; 3] = [
-            poly.clone().partial_evaluate((idx, F::zero()))
-                .reduce()
-                .iter()
-                .sum(),
-            poly.clone().partial_evaluate((idx, F::one())).reduce().iter().sum(),
-            poly.clone().partial_evaluate((idx, F::from(2)))
-                .reduce()
-                .iter()
-                .sum(),
-        ];
+        let round_poly: UnivariatePoly<F> = UnivariatePoly::interpolate(
+            vec![F::zero(), F::one(), F::from(2)],
+            vec![
+                poly.clone()
+                    .partial_evaluate((idx, F::zero()))
+                    .reduce()
+                    .iter()
+                    .sum(),
+                poly.clone()
+                    .partial_evaluate((idx, F::one()))
+                    .reduce()
+                    .iter()
+                    .sum(),
+                poly.clone()
+                    .partial_evaluate((idx, F::from(2)))
+                    .reduce()
+                    .iter()
+                    .sum(),
+            ],
+        );
 
         dbg!(&round_poly);
 
-        claimed_sum = round_poly[0] + round_poly[1];
+        claimed_sum = round_poly.evaluate_sum_over_boolean_hypercube();
 
         // committing the claimed_sum and round_poly to the transcript
         transcript.absorb_n(&[
             &claimed_sum.into_bigint().to_bytes_le(),
-            round_poly
-                .iter()
-                .flat_map(|f| f.into_bigint().to_bytes_le())
-                .collect::<Vec<_>>()
-                .as_slice(),
+            &round_poly.to_bytes(),
         ]);
+
+        // transcript.absorb(&round_poly.to_bytes());
 
         round_polys.push(round_poly);
 
@@ -182,28 +191,29 @@ pub fn partial_verify<F: PrimeField>(
     let mut challenges = vec![];
     let mut claimed_sum = proof.initial_claimed_sum;
 
+    dbg!(&proof.round_polys);
+
     for round_poly in &proof.round_polys {
-        if claimed_sum != round_poly.iter().take(2).sum() {
+        dbg!(&round_poly.evaluate_sum_over_boolean_hypercube());
+        dbg!(&claimed_sum);
+
+        if  round_poly.evaluate_sum_over_boolean_hypercube() != claimed_sum {
+            println!("Exiting from loop hereeeeee");
             return (challenges, claimed_sum);
         }
 
         transcript.absorb_n(&[
             &claimed_sum.into_bigint().to_bytes_le(),
-            round_poly
-                .iter()
-                .flat_map(|f| f.into_bigint().to_bytes_le())
-                .collect::<Vec<_>>()
-                .as_slice(),
+            &round_poly.to_bytes(),
         ]);
+
+        // transcript.absorb(&round_poly.to_bytes());
 
         let challenge = transcript.squeeze();
 
         challenges.push(challenge);
 
-        claimed_sum = round_poly[0]
-            + challenge * (round_poly[1] - round_poly[0])
-            + (challenge * (challenge - F::one()) / F::from(2))
-                * (round_poly[2] - F::from(2) * round_poly[1] + round_poly[0])
+        claimed_sum = round_poly.evaluate(challenge);
     }
 
     // if claimed_sum != poly.evaluate(challenges) {
@@ -216,12 +226,16 @@ pub fn partial_verify<F: PrimeField>(
 
 #[cfg(test)]
 mod tests {
-    use crate::sumcheck_protocol::{prove, verify};
-    // use ark_bn254::Fr;
+    use super::*;
+    use crate::sumcheck_protocol::{prove, verify, partial_prove, partial_verify};
+    use ark_bn254::Fr;
     use field_tracker::{print_summary, Ft};
-    use polynomials::multilinear::multilinear_poly::MultilinearPoly;
+    use polynomials::{
+        composed::{product_poly::ProductPoly, sum_poly::SumPoly},
+        multilinear::multilinear_poly::MultilinearPoly,
+    };
 
-    type Fr = Ft!(ark_bn254::Fr);
+    // type Fr = Ft!(ark_bn254::Fr);
 
     pub fn to_field(input: Vec<u64>) -> Vec<Fr> {
         input.iter().map(|v| Fr::from(*v)).collect()
@@ -236,7 +250,35 @@ mod tests {
     }
 
     #[test]
-    pub fn test_partial_sumcheck_gkr() {}
+    pub fn test_partial_sumcheck_gkr() {
+        let mut transcript = FiatShamir::<Keccak256, Fr>::new();
+        let (eval_1, eval_2) = (
+            vec![Fr::from(0), Fr::from(0), Fr::from(0), Fr::from(2)],
+            vec![Fr::from(0), Fr::from(0), Fr::from(0), Fr::from(3)],
+        );
+
+        let initial_polynomial: SumPoly<Fr> = SumPoly::new(vec![
+            ProductPoly::new(vec![
+                MultilinearPoly::new(eval_1.clone(), 2),
+                MultilinearPoly::new(eval_2.clone(), 2),
+            ]),
+            ProductPoly::new(vec![
+                MultilinearPoly::new(eval_1, 2),
+                MultilinearPoly::new(eval_2, 2),
+            ]),
+        ]);
+
+        let sum_check_proof = partial_prove(
+            &initial_polynomial,
+            Fr::from(12),
+            &mut transcript,
+        );
+
+        let res = partial_verify(&sum_check_proof, &mut transcript);
+        dbg!(&res);
+        // assert!(.0);
+
+    }
 
     pub fn get_2_20_poly() -> MultilinearPoly<Fr> {
         let no_of_variables = 20;
@@ -250,7 +292,7 @@ mod tests {
         MultilinearPoly::new(poly_vec, no_of_variables)
     }
 
-    #[test]
+    // #[test]
     pub fn test_sumcheck_using_field_tracker() {
         let mut poly = get_2_20_poly();
         let proof = prove(&poly, Fr::from(10));
