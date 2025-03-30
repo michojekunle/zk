@@ -21,7 +21,11 @@ impl<F: PrimeField> SumPoly<F> {
         let deg: usize = self.degree().try_into().unwrap();
 
         for i in 0..deg {
+            // println!("From Sum Polyyyyyyyyyy");
+            // dbg!(&i);
+            // dbg!(&self.polys[i]);
             self.polys[i] = self.polys[i].partial_evaluate(partial_eval);
+            // println!("Doneeeeeeeeee Sum Poly");
         }
 
         SumPoly::new(self.polys.clone())

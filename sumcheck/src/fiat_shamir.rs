@@ -38,7 +38,8 @@ impl<T: Digest + Default + FixedOutputReset, F: PrimeField> FiatShamir<T, F> {
     }
 
     pub fn squeeze_n(&mut self, n: usize) -> Vec<F> {
-        let mut rands: Vec<F> = Vec::with_capacity(n);
+        let mut rands: Vec<F> = vec![F::zero(); n];
+        
         for i in 0..n {
             rands[i] = self.squeeze();
         }

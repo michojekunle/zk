@@ -14,7 +14,20 @@ impl<F: PrimeField> MultilinearPoly<F> {
 
     pub fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
         let length = self.evals.len();
-        if 1 << (pos + 1) > length as i32 {
+
+        // dbg!(&self.evals);
+        // dbg!(&length);
+        // dbg!(1 << (pos + 1));
+        // dbg!(&pos);
+        // dbg!(&val);
+        // println!();
+        // println!();
+
+        if self.n_vars == 0 {
+            return MultilinearPoly::new(self.evals.to_vec(), self.n_vars)
+        }
+
+        if self.n_vars > 1 && 1 << (pos + 1) > length as i32 {
             panic!(
                 "The position is out of range for this polynomial with {} evals",
                 self.evals.len()
@@ -29,11 +42,16 @@ impl<F: PrimeField> MultilinearPoly<F> {
             *c_i + val * (*c_pair_index - c_i)
         }));
 
+        dbg!(&self.n_vars);
+
         MultilinearPoly::new(new_evals, self.n_vars - 1)
     }
 
     pub fn evaluate(&mut self, values: Vec<F>) -> F {
+        // dbg!(&values);
         for i in 0..values.len() {
+            // dbg!(&self.n_vars);
+            // dbg!(&self.evals);
             *self = self.partial_evaluate((self.n_vars - 1, values[i]));
         }
         self.evals[0]
@@ -44,7 +62,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
             scalar * *e
         }).collect();
 
-        MultilinearPoly::new(new_evals, self.n_vars - 1)
+        MultilinearPoly::new(new_evals, self.n_vars)
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {

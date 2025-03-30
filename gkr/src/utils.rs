@@ -10,8 +10,15 @@ pub fn get_evaluated_muli_addi_at_a<F: PrimeField>(
     let mut new_addi_b_c = addi_a_b_c;
 
     for i in 0..random_values.len() {
-        new_muli_b_c = new_muli_b_c.partial_evaluate((new_muli_b_c.n_vars - 1, random_values[i]));
-        new_addi_b_c = new_addi_b_c.partial_evaluate((new_addi_b_c.n_vars - 1, random_values[i]));
+        if new_muli_b_c.n_vars != 0 {
+            new_muli_b_c =
+                new_muli_b_c.partial_evaluate((new_muli_b_c.n_vars - 1, random_values[i]));
+        }
+
+        if new_addi_b_c.n_vars != 0 {
+            new_addi_b_c =
+                new_addi_b_c.partial_evaluate((new_addi_b_c.n_vars - 1, random_values[i]));
+        }
     }
 
     (new_muli_b_c, new_addi_b_c)
@@ -26,12 +33,16 @@ pub fn get_folded_polys<F: PrimeField>(
     r_c: &[F],
 ) -> (MultilinearPoly<F>, MultilinearPoly<F>) {
     // Apply partial evaluation for r_b and scale by alpha
+
     let muli_b = r_b
         .iter()
         .fold(muli_a_b_c.clone(), |mut acc, &b| {
             acc.partial_evaluate((acc.n_vars - 1, b))
         })
         .scalar_mul(*alpha);
+
+    dbg!(&muli_b);
+
     let addi_b = r_b
         .iter()
         .fold(addi_a_b_c.clone(), |mut acc, &b| {
@@ -46,6 +57,7 @@ pub fn get_folded_polys<F: PrimeField>(
             acc.partial_evaluate((acc.n_vars - 1, c))
         })
         .scalar_mul(*beta);
+
     let addi_c = r_c
         .iter()
         .fold(addi_a_b_c, |mut acc, &c| {
@@ -53,8 +65,14 @@ pub fn get_folded_polys<F: PrimeField>(
         })
         .scalar_mul(*beta);
 
+    let muli_b_c = muli_b + muli_c;
+    let addi_b_c = addi_b + addi_c;
+
+    dbg!(&muli_b_c);
+    dbg!(&addi_b_c);
+
     // Sum the results
-    (muli_b + muli_c, addi_b + addi_c)
+    (muli_b_c, addi_b_c)
 }
 
 pub fn get_folded_claim_sum<F: PrimeField>(

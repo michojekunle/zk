@@ -20,7 +20,11 @@ impl<F: PrimeField> ProductPoly<F> {
         let deg: usize = self.degree().try_into().unwrap();
 
         for i in 0..deg {
+            // println!("Frommmmmmmm Product Poly");
+            // dbg!(&i);
+            // dbg!(&self.polys[i]);
             self.polys[i] = self.polys[i].partial_evaluate((pos, val));
+            // println!("Doneeeeeeeeee Product Poly");
         }
 
         ProductPoly::new(self.polys.clone())
@@ -46,7 +50,7 @@ impl<F: PrimeField> ProductPoly<F> {
             .enumerate()
             .map(|(index, _)| {
                 let mut running_idx_prod = F::one();
-
+                
                 self.polys.iter().for_each(|poly| {
                     running_idx_prod *= poly.evals[index];
                 });

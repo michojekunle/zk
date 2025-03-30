@@ -13,12 +13,11 @@ use sha3::Keccak256;
 use std::marker::PhantomData;
 use sumcheck::{fiat_shamir::FiatShamir, sumcheck_protocol::partial_prove};
 
-pub struct GKRProver<F: PrimeField, P: Pairing> {
+pub struct GKRProver<F: PrimeField> {
     _phantom: PhantomData<F>,
-    _phantom_p: PhantomData<P>,
 }
 
-impl<F: PrimeField, P: Pairing> GKRProver<F, P> {
+impl<F: PrimeField> GKRProver<F> {
     pub fn prove(
         input_layer: &[F],
         circuit: &mut Circuit<F>,
@@ -64,8 +63,14 @@ impl<F: PrimeField, P: Pairing> GKRProver<F, P> {
                         &random_values[random_values.len() / 2..],
                     );
 
-                    let w_i_b_eval = running_layer_poly.evaluate(r_b.to_vec());
-                    let w_i_c_eval = running_layer_poly.evaluate(r_c.to_vec());
+                    dbg!(&r_b);
+                    dbg!(&r_c);
+
+                    let w_i_b_eval = running_layer_poly.clone().evaluate(r_b.to_vec());
+                    let w_i_c_eval = running_layer_poly.clone().evaluate(r_c.to_vec());
+
+                    dbg!(&w_i_b_eval);
+                    dbg!(&w_i_c_eval);
 
                     transcript.absorb_n(&[
                         &w_i_b_eval.into_bigint().to_bytes_le(),
@@ -90,9 +95,17 @@ impl<F: PrimeField, P: Pairing> GKRProver<F, P> {
 
             let next_w_i = circuit.get_layer_poly(layer_i + 1, input_layer.to_vec());
 
+            dbg!(&next_w_i);
+            dbg!(&new_addi_b_c);
+            dbg!(&new_muli_b_c);
+
             let f_bc: SumPoly<F> = Circuit::generate_fbc(new_addi_b_c, new_muli_b_c, &next_w_i);
 
+            dbg!(&f_bc);
+
             let sumcheck_proof = partial_prove(&f_bc, claimed_sum, transcript);
+
+            dbg!(&sumcheck_proof);
 
             random_values = sumcheck_proof
                 .rand_challenges

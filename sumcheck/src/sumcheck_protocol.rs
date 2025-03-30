@@ -75,22 +75,26 @@ pub fn partial_prove<F: PrimeField>(
 
     let mut poly = poly.clone();
 
+    // dbg!(&n_vars);
+
     for i in 0..n_vars {
-        let idx: usize = (n_vars - 1).try_into().unwrap();
+        let idx: usize = (poly.n_vars() - 1).try_into().unwrap();
         let mut claimed_sum = F::zero();
 
         // implement reduce func. for polynomials functions sum_poly et product_poly
         let round_poly: [F; 3] = [
-            poly.partial_evaluate((idx, F::zero()))
+            poly.clone().partial_evaluate((idx, F::zero()))
                 .reduce()
                 .iter()
                 .sum(),
-            poly.partial_evaluate((idx, F::one())).reduce().iter().sum(),
-            poly.partial_evaluate((idx, F::from(2)))
+            poly.clone().partial_evaluate((idx, F::one())).reduce().iter().sum(),
+            poly.clone().partial_evaluate((idx, F::from(2)))
                 .reduce()
                 .iter()
                 .sum(),
         ];
+
+        dbg!(&round_poly);
 
         claimed_sum = round_poly[0] + round_poly[1];
 
@@ -110,6 +114,9 @@ pub fn partial_prove<F: PrimeField>(
 
         rand_challenges.push(challenge.clone());
 
+        dbg!(&poly.n_vars());
+        dbg!(&idx);
+        dbg!(&challenge);
         poly = poly.partial_evaluate((idx, challenge))
     }
 

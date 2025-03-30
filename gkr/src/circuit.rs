@@ -72,7 +72,6 @@ impl<F: PrimeField> Circuit<F> {
         input_layer: Vec<F>,
     ) -> MultilinearPoly<F> {
         let evals: Vec<Vec<F>> = self.eval(input_layer).into_iter().rev().collect();
-
         let layer_eval = &evals[layer_id];
 
         let N = layer_eval.len();
@@ -91,30 +90,31 @@ impl<F: PrimeField> Circuit<F> {
         let mut evals: Vec<F> = Vec::new();
 
         for gate in layer {
+            // Format the output, left, and right as binary strings with the specified widths
+            let output_binary = format!("{:0width$b}", gate.output, width = l_i_vars as usize);
+            let left_binary = format!("{:0width$b}", gate.left, width = l_i_plus_1_vars as usize);
+            let right_binary = format!("{:0width$b}", gate.right, width = l_i_plus_1_vars as usize);
+
+            // Combine the binary strings
+            let combined_binary = format!("{}{}{}", output_binary, left_binary, right_binary);
+            let eval_pow = combined_binary.len();
+            // dbg!(&eval_pow);
+
+            // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
+            let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
+
+            n_vars = eval_pow;
+            evals = vec![F::zero(); 1 << eval_pow];
+
+            // dbg!(&n_vars);
+
             if gate.op == op {
-                // Format the output, left, and right as binary strings with the specified widths
-                let output_binary = format!("{:0width$b}", gate.output, width = l_i_vars as usize);
-                let left_binary =
-                    format!("{:0width$b}", gate.left, width = l_i_plus_1_vars as usize);
-                let right_binary =
-                    format!("{:0width$b}", gate.right, width = l_i_plus_1_vars as usize);
-
-                // Combine the binary strings
-                let combined_binary = format!("{}{}{}", output_binary, left_binary, right_binary);
-                let eval_pow = combined_binary.len();
-
-                // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
-                let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
-
-                n_vars = eval_pow;
-
-                if evals.len() > 0 {
-                    evals[eval_true_index] = F::one();
-                } else {
-                    evals = vec![F::zero(); 1 << eval_pow];
-                    evals[eval_true_index] = F::one();
-                }
+                evals[eval_true_index] = F::one();   
             }
+
+
+            // dbg!(&evals);
+            // dbg!(&op);
         }
 
         MultilinearPoly::new(evals, n_vars)
@@ -406,7 +406,4 @@ mod tests {
         assert_eq!(result_2.evals[14], Fr::from(48u64)); // 8 * 6
         assert_eq!(result_2.evals[15], Fr::from(64u64)); // 8 * 8
     }
-
-    #[test]
-    fn test_get_fbc_poly() {}
 }
