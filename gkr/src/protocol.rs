@@ -77,8 +77,7 @@ mod tests {
         let gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript_p);
         let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
 
+        assert!(is_verified);
         dbg!(is_verified);
-
-
     }
 }

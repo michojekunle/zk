@@ -74,9 +74,9 @@ impl<F: PrimeField> Circuit<F> {
         let evals: Vec<Vec<F>> = self.eval(input_layer).into_iter().rev().collect();
         let layer_eval = &evals[layer_id];
 
-        let N = layer_eval.len();
-        assert!(N.is_power_of_two(), "Length must be a power of 2");
-        let n = (N as f64).log2() as u32;
+        let len = layer_eval.len();
+        assert!(len.is_power_of_two(), "Length must be a power of 2");
+        let n = (len as f64).log2() as u32;
 
         MultilinearPoly::new(layer_eval.to_vec(), n.try_into().unwrap())
     }

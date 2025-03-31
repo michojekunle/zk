@@ -55,27 +55,34 @@ impl<F: PrimeField> GKRVerifier<F> {
             let (challenges, claimed_sum) =
                 partial_verify(&proof.sumcheck_proofs[layer_i], transcript);
 
-            dbg!(&challenges);
-            dbg!(&new_muli_b_c);
-            dbg!(&new_addi_b_c);
-            dbg!(&new_addi_b_c.evaluate(challenges.to_vec()));
-            dbg!(&new_muli_b_c.evaluate(challenges.to_vec()));
+            // dbg!(&challenges);
+            // dbg!(&new_muli_b_c);
+            // dbg!(&new_addi_b_c);
+            // dbg!(&new_addi_b_c.evaluate(challenges.to_vec()));
+            // dbg!(&new_muli_b_c.evaluate(challenges.to_vec()));
 
             let (new_muli_b_c_eval, new_addi_b_c_eval) = (
                 new_muli_b_c.evaluate(challenges.to_vec()),
                 new_addi_b_c.evaluate(challenges.to_vec()),
             );
+            
+            // dbg!(&new_addi_b_c_eval);
+            // dbg!(&new_muli_b_c_eval);
 
             let (next_w_i_b_eval, next_w_i_c_eval) = if layer_i + 1 == layer_count {
                 let (r_b, r_c) = challenges.split_at(challenges.len() / 2);
 
+                // dbg!(&r_b);
+                // dbg!(&r_c);
                 let mut next_w_i = MultilinearPoly::new(
                     input_layer.to_vec(),
                     input_layer.len().ilog2().try_into().unwrap(),
                 );
 
+                // dbg!(&next_w_i);
+
                 (
-                    next_w_i.evaluate(r_b.to_vec()),
+                    next_w_i.clone().evaluate(r_b.to_vec()),
                     next_w_i.evaluate(r_c.to_vec()),
                 )
             } else {
@@ -87,8 +94,8 @@ impl<F: PrimeField> GKRVerifier<F> {
                 &next_w_i_c_eval.into_bigint().to_bytes_le(),
             ]);
             
-            dbg!(&new_addi_b_c_eval);
-            dbg!(&new_muli_b_c_eval);
+            // dbg!(&new_addi_b_c_eval);
+            // dbg!(&new_muli_b_c_eval);
 
             let fbc_eval = (new_addi_b_c_eval * (next_w_i_b_eval + next_w_i_c_eval))
                 + (new_muli_b_c_eval * (next_w_i_b_eval * next_w_i_c_eval));
