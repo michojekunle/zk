@@ -63,14 +63,14 @@ impl<F: PrimeField> GKRProver<F> {
                         &random_values[random_values.len() / 2..],
                     );
 
-                    dbg!(&r_b);
-                    dbg!(&r_c);
+                    // dbg!(&r_b);
+                    // dbg!(&r_c);
 
                     let w_i_b_eval = running_layer_poly.clone().evaluate(r_b.to_vec());
                     let w_i_c_eval = running_layer_poly.clone().evaluate(r_c.to_vec());
 
-                    dbg!(&w_i_b_eval);
-                    dbg!(&w_i_c_eval);
+                    // dbg!(&w_i_b_eval);
+                    // dbg!(&w_i_c_eval);
 
                     transcript.absorb_n(&[
                         &w_i_b_eval.into_bigint().to_bytes_le(),
@@ -95,17 +95,17 @@ impl<F: PrimeField> GKRProver<F> {
 
             let next_w_i = circuit.get_layer_poly(layer_i + 1, input_layer.to_vec());
 
-            dbg!(&next_w_i);
-            dbg!(&new_addi_b_c);
-            dbg!(&new_muli_b_c);
+            // dbg!(&next_w_i);
+            // dbg!(&new_addi_b_c);
+            // dbg!(&new_muli_b_c);
 
             let f_bc: SumPoly<F> = Circuit::generate_fbc(new_addi_b_c, new_muli_b_c, &next_w_i);
 
-            dbg!(&f_bc);
+            // dbg!(&f_bc);
 
             let sumcheck_proof = partial_prove(&f_bc, claimed_sum, transcript);
 
-            dbg!(&sumcheck_proof);
+            // dbg!(&sumcheck_proof);
 
             random_values = sumcheck_proof
                 .rand_challenges

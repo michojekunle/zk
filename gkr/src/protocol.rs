@@ -71,10 +71,11 @@ mod tests {
     #[test]
     fn test_gkr_impl() {
         let (mut circuit, input) = init_circuit();
-        let mut transcript = FiatShamir::<Keccak256, Fq>::new();
+        let mut transcript_p = FiatShamir::<Keccak256, Fq>::new();
+        let mut transcript_v = FiatShamir::<Keccak256, Fq>::new();
 
-        let gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript);
-        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript, gkr_proof);
+        let gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript_p);
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
 
         dbg!(is_verified);
 

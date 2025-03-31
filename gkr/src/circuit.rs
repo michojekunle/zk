@@ -83,11 +83,13 @@ impl<F: PrimeField> Circuit<F> {
 
     pub(crate) fn add_mul_i(&self, layer_id: usize, op: Op) -> MultilinearPoly<F> {
         let layer = &self.layers[layer_id];
-        let l_i_vars = layer_id as u32;
+        let l_i_vars = (layer_id as u32).max(1);
         let l_i_plus_1_vars = layer_id as u32 + 1;
 
-        let mut n_vars: usize = 0;
-        let mut evals: Vec<F> = Vec::new();
+        // Calculate n_vars once (total bits = output + left + right)
+        let n_vars = (l_i_vars + 2 * l_i_plus_1_vars) as usize;
+        let mut evals = vec![F::zero(); 1 << n_vars];
+        // dbg!(&n_vars);
 
         for gate in layer {
             // Format the output, left, and right as binary strings with the specified widths
@@ -95,23 +97,14 @@ impl<F: PrimeField> Circuit<F> {
             let left_binary = format!("{:0width$b}", gate.left, width = l_i_plus_1_vars as usize);
             let right_binary = format!("{:0width$b}", gate.right, width = l_i_plus_1_vars as usize);
 
-            // Combine the binary strings
+            // Combine the binary strings and Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
             let combined_binary = format!("{}{}{}", output_binary, left_binary, right_binary);
-            let eval_pow = combined_binary.len();
-            // dbg!(&eval_pow);
-
-            // Convert the combined binary string to a decimal number to be used as the index to input 1 in the array
             let eval_true_index: usize = usize::from_str_radix(&combined_binary, 2).unwrap();
 
-            n_vars = eval_pow;
-            evals = vec![F::zero(); 1 << eval_pow];
-
-            // dbg!(&n_vars);
 
             if gate.op == op {
-                evals[eval_true_index] = F::one();   
+                evals[eval_true_index] = F::one();
             }
-
 
             // dbg!(&evals);
             // dbg!(&op);
@@ -292,7 +285,7 @@ mod tests {
         let circuit_mul_2 = circuit.add_mul_i(2, Op::MUL);
 
         assert!(
-            circuit_mul_0.evals.len() == 0,
+            circuit_mul_0.evals.len() == 8,
             "getting mul_i for layer_index 0 failed"
         );
         assert!(

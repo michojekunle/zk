@@ -42,8 +42,6 @@ impl<F: PrimeField> MultilinearPoly<F> {
             *c_i + val * (*c_pair_index - c_i)
         }));
 
-        dbg!(&self.n_vars);
-
         MultilinearPoly::new(new_evals, self.n_vars - 1)
     }
 

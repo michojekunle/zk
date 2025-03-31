@@ -105,7 +105,7 @@ pub fn partial_prove<F: PrimeField>(
             ],
         );
 
-        dbg!(&round_poly);
+        // dbg!(&round_poly);
 
         claimed_sum = round_poly.evaluate_sum_over_boolean_hypercube();
 
@@ -115,17 +115,16 @@ pub fn partial_prove<F: PrimeField>(
             &round_poly.to_bytes(),
         ]);
 
-        // transcript.absorb(&round_poly.to_bytes());
-
         round_polys.push(round_poly);
 
         let challenge = transcript.squeeze();
 
         rand_challenges.push(challenge.clone());
 
-        dbg!(&poly.n_vars());
-        dbg!(&idx);
-        dbg!(&challenge);
+        // dbg!(&poly.n_vars());
+        // dbg!(&idx);
+        // dbg!(&challenge);
+
         poly = poly.partial_evaluate((idx, challenge))
     }
 
@@ -191,12 +190,9 @@ pub fn partial_verify<F: PrimeField>(
     let mut challenges = vec![];
     let mut claimed_sum = proof.initial_claimed_sum;
 
-    dbg!(&proof.round_polys);
+    // dbg!(&proof.round_polys);
 
     for round_poly in &proof.round_polys {
-        dbg!(&round_poly.evaluate_sum_over_boolean_hypercube());
-        dbg!(&claimed_sum);
-
         if  round_poly.evaluate_sum_over_boolean_hypercube() != claimed_sum {
             println!("Exiting from loop hereeeeee");
             return (challenges, claimed_sum);
@@ -206,8 +202,6 @@ pub fn partial_verify<F: PrimeField>(
             &claimed_sum.into_bigint().to_bytes_le(),
             &round_poly.to_bytes(),
         ]);
-
-        // transcript.absorb(&round_poly.to_bytes());
 
         let challenge = transcript.squeeze();
 
@@ -251,7 +245,8 @@ mod tests {
 
     #[test]
     pub fn test_partial_sumcheck_gkr() {
-        let mut transcript = FiatShamir::<Keccak256, Fr>::new();
+        let mut transcript_p = FiatShamir::<Keccak256, Fr>::new();
+        let mut transcript_v = FiatShamir::<Keccak256, Fr>::new();
         let (eval_1, eval_2) = (
             vec![Fr::from(0), Fr::from(0), Fr::from(0), Fr::from(2)],
             vec![Fr::from(0), Fr::from(0), Fr::from(0), Fr::from(3)],
@@ -271,10 +266,10 @@ mod tests {
         let sum_check_proof = partial_prove(
             &initial_polynomial,
             Fr::from(12),
-            &mut transcript,
+            &mut transcript_p,
         );
 
-        let res = partial_verify(&sum_check_proof, &mut transcript);
+        let res = partial_verify(&sum_check_proof, &mut transcript_v);
         dbg!(&res);
         // assert!(.0);
 

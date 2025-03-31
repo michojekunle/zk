@@ -41,7 +41,7 @@ pub fn get_folded_polys<F: PrimeField>(
         })
         .scalar_mul(*alpha);
 
-    dbg!(&muli_b);
+    // dbg!(&muli_b);
 
     let addi_b = r_b
         .iter()
@@ -68,8 +68,8 @@ pub fn get_folded_polys<F: PrimeField>(
     let muli_b_c = muli_b + muli_c;
     let addi_b_c = addi_b + addi_c;
 
-    dbg!(&muli_b_c);
-    dbg!(&addi_b_c);
+    // dbg!(&muli_b_c);
+    // dbg!(&addi_b_c);
 
     // Sum the results
     (muli_b_c, addi_b_c)
