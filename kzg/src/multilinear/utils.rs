@@ -44,19 +44,10 @@ mod tests {
     #[test]
     fn test_generate_lagrange_basis() {
         // Generate random taus for testing
-        // In a real scenario, these would be the points where the polynomial is evaluated
-        // For this test, we will use random values
-        // let mut rng = rand::thread_rng();
         let mut rng = StdRng::from_entropy();
-        let taus: Vec<Fr> = (0..3).map(|x| Fr::rand(&mut rng)).collect();
+        let taus: Vec<Fr> = (0..3).map(|_| Fr::rand(&mut rng)).collect();
 
         let lagrange_basis = generate_lagrange_basis(&taus);
-
-        // Print the results for verification
-        // println!("Generated Lagrange Basis:");
-        // for (i, basis) in lagrange_basis.iter().enumerate() {
-        //     println!("Basis {}: {:?}", i, basis);
-        // }
 
         // Basic assertions to ensure the function works as expected
         assert_eq!(lagrange_basis.len(), 1 << taus.len());
