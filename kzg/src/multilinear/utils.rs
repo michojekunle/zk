@@ -1,0 +1,77 @@
+use ark_ec::pairing::Pairing;
+use ark_ec::PrimeGroup;
+use ark_ff::{PrimeField, UniformRand};
+use ark_std::rand::rngs::StdRng;
+use ark_std::rand::SeedableRng;
+use std::ops::Mul;
+
+/// Generates an array of Lagrange basis polynomials evaluated over the boolean hypercube
+/// for a given set of `taus`.
+pub fn generate_lagrange_basis<F: PrimeField>(taus: &[F]) -> Vec<F> {
+    let n = taus.len();
+    let mut lagrange_basis = Vec::new();
+
+    let dim = 1 << n; // 2^n for the boolean hypercube
+    for i in 0..dim {
+        let mut product = F::one();
+        for j in 0..n {
+            let bit = (i >> j) & 1;
+            if bit == 1 {
+                product *= taus[j];
+            } else {
+                product *= F::one() - taus[j];
+            }
+        }
+        lagrange_basis.push(product);
+    }
+
+    lagrange_basis
+}
+
+/// Encrypts the generated Lagrange basis polynomials using generator points G1.
+pub fn encrypt_lagrange_basis<E: Pairing>(lagrange_basis: &[E::ScalarField]) -> Vec<E::G1> {
+    lagrange_basis
+        .iter()
+        .map(|coeff| E::G1::generator().mul(coeff))
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ark_bn254::{Bn254, Fr};
+
+    #[test]
+    fn test_generate_lagrange_basis() {
+        // Generate random taus for testing
+        // In a real scenario, these would be the points where the polynomial is evaluated
+        // For this test, we will use random values
+        // let mut rng = rand::thread_rng();
+        let mut rng = StdRng::from_entropy();
+        let taus: Vec<Fr> = (0..3).map(|x| Fr::rand(&mut rng)).collect();
+
+        let lagrange_basis = generate_lagrange_basis(&taus);
+
+        // Print the results for verification
+        // println!("Generated Lagrange Basis:");
+        // for (i, basis) in lagrange_basis.iter().enumerate() {
+        //     println!("Basis {}: {:?}", i, basis);
+        // }
+
+        // Basic assertions to ensure the function works as expected
+        assert_eq!(lagrange_basis.len(), 1 << taus.len());
+    }
+
+    #[test]
+    fn test_encrypt_lagrange_basis() {
+        let mut rng = StdRng::from_entropy();
+        let taus: Vec<Fr> = (0..3).map(|_| Fr::rand(&mut rng)).collect();
+        let lagrange_basis = generate_lagrange_basis(&taus);
+
+        // Encrypt the generated Lagrange basis polynomials
+        let encrypted_basis = encrypt_lagrange_basis::<Bn254>(&lagrange_basis);
+
+        // Basic assertions to ensure the function works as expected
+        assert_eq!(encrypted_basis.len(), lagrange_basis.len());
+    }
+}
