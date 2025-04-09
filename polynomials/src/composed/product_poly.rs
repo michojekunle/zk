@@ -16,21 +16,17 @@ impl<F: PrimeField> ProductPoly<F> {
         self.polys.len() as i32
     }
 
-    pub fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
+    pub fn partial_evaluate(&self, (pos, val): (usize, F)) -> Self {
         let deg: usize = self.degree().try_into().unwrap();
 
-        for i in 0..deg {
-            // println!("Frommmmmmmm Product Poly");
-            // dbg!(&i);
-            // dbg!(&self.polys[i]);
-            self.polys[i] = self.polys[i].partial_evaluate((pos, val));
-            // println!("Doneeeeeeeeee Product Poly");
-        }
+        let new_polys: Vec<MultilinearPoly<F>> = (0..deg)
+            .map(|i| self.polys[i].partial_evaluate((pos, val)))
+            .collect();
 
-        ProductPoly::new(self.polys.clone())
+        ProductPoly::new(new_polys)
     }
 
-    pub fn evaluate(&mut self, values: Vec<F>) -> F {
+    pub fn evaluate(&self, values: Vec<F>) -> F {
         let mut product: F = F::one();
         let deg: usize = self.degree().try_into().unwrap();
 
@@ -43,14 +39,14 @@ impl<F: PrimeField> ProductPoly<F> {
     }
 
     pub fn reduce(&self) -> Vec<F> {
-        // perform element wise product on each multilinear polynomial
+        // perform element-wise product on each multilinear polynomial
         let general_poly_length = self.length();
 
         let res = iter::repeat(())
             .enumerate()
             .map(|(index, _)| {
                 let mut running_idx_prod = F::one();
-                
+
                 self.polys.iter().for_each(|poly| {
                     running_idx_prod *= poly.evals[index];
                 });
@@ -94,7 +90,7 @@ mod tests {
     fn test_partial_evaluate() {
         let poly1 = MultilinearPoly::new(vec![Fr::from(1), Fr::from(2)], 1);
         let poly2 = MultilinearPoly::new(vec![Fr::from(3), Fr::from(4)], 1);
-        let mut product_poly = ProductPoly::new(vec![poly1, poly2]);
+        let product_poly = ProductPoly::new(vec![poly1, poly2]);
 
         let partial_evals = (0, Fr::from(1));
         let evaluated = product_poly.partial_evaluate(partial_evals);
@@ -106,7 +102,7 @@ mod tests {
     fn test_evaluate() {
         let poly1 = MultilinearPoly::new(vec![Fr::from(1), Fr::from(2)], 1);
         let poly2 = MultilinearPoly::new(vec![Fr::from(3), Fr::from(4)], 1);
-        let mut product_poly = ProductPoly::new(vec![poly1, poly2]);
+        let product_poly = ProductPoly::new(vec![poly1, poly2]);
 
         let values = vec![Fr::from(1)];
         let result = product_poly.evaluate(values);
@@ -121,7 +117,7 @@ mod tests {
             .map(|i| MultilinearPoly::new(vec![Fr::from(i as u64), Fr::from(i as u64 + 1)], 1))
             .collect();
 
-        let mut product_poly = ProductPoly::new(polys);
+        let product_poly = ProductPoly::new(polys);
         assert_eq!(product_poly.polys.len(), 3);
 
         let values = vec![Fr::from(1)];
@@ -138,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_empty_evaluation() {
-        let mut product_poly: ProductPoly<Fr> = ProductPoly::new(vec![]);
+        let product_poly: ProductPoly<Fr> = ProductPoly::new(vec![]);
         let result = product_poly.evaluate(vec![]);
         assert_eq!(result, Fr::from(1)); // Empty product should return 1
     }

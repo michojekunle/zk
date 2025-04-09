@@ -87,18 +87,12 @@ pub fn partial_prove<F: PrimeField>(
         let round_poly: UnivariatePoly<F> = UnivariatePoly::interpolate(
             vec![F::zero(), F::one(), F::from(2)],
             vec![
-                poly.clone()
-                    .partial_evaluate((idx, F::zero()))
+                poly.partial_evaluate((idx, F::zero()))
                     .reduce()
                     .iter()
                     .sum(),
-                poly.clone()
-                    .partial_evaluate((idx, F::one()))
-                    .reduce()
-                    .iter()
-                    .sum(),
-                poly.clone()
-                    .partial_evaluate((idx, F::from(2)))
+                poly.partial_evaluate((idx, F::one())).reduce().iter().sum(),
+                poly.partial_evaluate((idx, F::from(2)))
                     .reduce()
                     .iter()
                     .sum(),
@@ -193,7 +187,7 @@ pub fn partial_verify<F: PrimeField>(
     // dbg!(&proof.round_polys);
 
     for round_poly in &proof.round_polys {
-        if  round_poly.evaluate_sum_over_boolean_hypercube() != claimed_sum {
+        if round_poly.evaluate_sum_over_boolean_hypercube() != claimed_sum {
             println!("Exiting from loop hereeeeee");
             return (challenges, claimed_sum);
         }
@@ -221,7 +215,7 @@ pub fn partial_verify<F: PrimeField>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sumcheck_protocol::{prove, verify, partial_prove, partial_verify};
+    use crate::sumcheck_protocol::{partial_prove, partial_verify, prove, verify};
     use ark_bn254::Fr;
     use field_tracker::{print_summary, Ft};
     use polynomials::{
@@ -263,16 +257,11 @@ mod tests {
             ]),
         ]);
 
-        let sum_check_proof = partial_prove(
-            &initial_polynomial,
-            Fr::from(12),
-            &mut transcript_p,
-        );
+        let sum_check_proof = partial_prove(&initial_polynomial, Fr::from(12), &mut transcript_p);
 
         let res = partial_verify(&sum_check_proof, &mut transcript_v);
         dbg!(&res);
         // assert!(.0);
-
     }
 
     pub fn get_2_20_poly() -> MultilinearPoly<Fr> {

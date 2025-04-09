@@ -12,19 +12,11 @@ impl<F: PrimeField> MultilinearPoly<F> {
         MultilinearPoly { evals, n_vars }
     }
 
-    pub fn partial_evaluate(&mut self, (pos, val): (usize, F)) -> Self {
+    pub fn partial_evaluate(&self, (pos, val): (usize, F)) -> Self {
         let length = self.evals.len();
 
-        // dbg!(&self.evals);
-        // dbg!(&length);
-        // dbg!(1 << (pos + 1));
-        // dbg!(&pos);
-        // dbg!(&val);
-        // println!();
-        // println!();
-
         if self.n_vars == 0 {
-            return MultilinearPoly::new(self.evals.to_vec(), self.n_vars)
+            return MultilinearPoly::new(self.evals.to_vec(), self.n_vars);
         }
 
         if self.n_vars > 1 && 1 << (pos + 1) > length as i32 {
@@ -45,20 +37,17 @@ impl<F: PrimeField> MultilinearPoly<F> {
         MultilinearPoly::new(new_evals, self.n_vars - 1)
     }
 
-    pub fn evaluate(&mut self, values: Vec<F>) -> F {
-        // dbg!(&values);
+    pub fn evaluate(&self, values: Vec<F>) -> F {
+        let mut poly = self.clone();
+
         for i in 0..values.len() {
-            // dbg!(&i);
-            // dbg!(&self.n_vars);
-            // dbg!(&self.evals);
-            *self = self.partial_evaluate((self.n_vars - 1, values[i]));
+            poly = poly.partial_evaluate((poly.n_vars - 1, values[i]));
         }
 
-        // dbg!(&self);
-        self.evals[0]
+        poly.evals[0]
     }
 
-    pub fn scalar_mul(&mut self, scalar: F) -> Self {
+    pub fn scalar_mul(&self, scalar: F) -> Self {
         let new_evals = self.evals.iter().map(|e| {
             scalar * *e
         }).collect();
@@ -127,7 +116,7 @@ pub mod tests {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_a_2v() {
-        let mut poly = MultilinearPoly::<Fq> {
+        let poly = MultilinearPoly::<Fq> {
             evals: vec![Fq::from(0), Fq::from(2), Fq::from(0), Fq::from(5)],
             n_vars: 2,
         };
@@ -141,7 +130,7 @@ pub mod tests {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_b_2v() {
-        let mut poly = MultilinearPoly::<Fq> {
+        let poly = MultilinearPoly::<Fq> {
             evals: vec![Fq::from(0), Fq::from(2), Fq::from(0), Fq::from(5)],
             n_vars: 2,
         };
@@ -155,7 +144,7 @@ pub mod tests {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_a_3v() {
-        let mut poly_2 = MultilinearPoly::new(
+        let poly_2 = MultilinearPoly::new(
             vec![
                 Fq::from(0),
                 Fq::from(0),
@@ -177,7 +166,7 @@ pub mod tests {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_b_3v() {
-        let mut poly_2 = MultilinearPoly::new(
+        let poly_2 = MultilinearPoly::new(
             vec![
                 Fq::from(0),
                 Fq::from(0),
@@ -199,7 +188,7 @@ pub mod tests {
 
     #[test]
     fn test_partial_evaluate_multilinear_polynomial_c_3v() {
-        let mut poly_2 = MultilinearPoly::new(
+        let poly_2 = MultilinearPoly::new(
             vec![
                 Fq::from(0),
                 Fq::from(0),
@@ -221,7 +210,7 @@ pub mod tests {
 
     #[test]
     fn test_evaluate_multilinear_polynomial_abc() {
-        let mut poly_2 = MultilinearPoly::new(
+        let poly_2 = MultilinearPoly::new(
             vec![
                 Fq::from(0),
                 Fq::from(0),
@@ -240,7 +229,7 @@ pub mod tests {
 
     #[test]
     fn test_scalar_mul() {
-        let mut poly = MultilinearPoly::new(
+        let poly = MultilinearPoly::new(
             vec![
                 Fq::from(0),
                 Fq::from(0),

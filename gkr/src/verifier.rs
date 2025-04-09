@@ -82,7 +82,7 @@ impl<F: PrimeField> GKRVerifier<F> {
                 // dbg!(&next_w_i);
 
                 (
-                    next_w_i.clone().evaluate(r_b.to_vec()),
+                    next_w_i.evaluate(r_b.to_vec()),
                     next_w_i.evaluate(r_c.to_vec()),
                 )
             } else {

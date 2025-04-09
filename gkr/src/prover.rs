@@ -66,8 +66,8 @@ impl<F: PrimeField> GKRProver<F> {
                     // dbg!(&r_b);
                     // dbg!(&r_c);
 
-                    let w_i_b_eval = running_layer_poly.clone().evaluate(r_b.to_vec());
-                    let w_i_c_eval = running_layer_poly.clone().evaluate(r_c.to_vec());
+                    let w_i_b_eval = running_layer_poly.evaluate(r_b.to_vec());
+                    let w_i_c_eval = running_layer_poly.evaluate(r_c.to_vec());
 
                     // dbg!(&w_i_b_eval);
                     // dbg!(&w_i_c_eval);

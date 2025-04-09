@@ -16,21 +16,17 @@ impl<F: PrimeField> SumPoly<F> {
         self.polys.len() as i32
     }
 
-    pub fn partial_evaluate(&mut self, partial_eval: (usize, F)) -> Self {
+    pub fn partial_evaluate(&self, partial_eval: (usize, F)) -> Self {
         let deg: usize = self.degree().try_into().unwrap();
 
-        for i in 0..deg {
-            // println!("From Sum Polyyyyyyyyyy");
-            // dbg!(&i);
-            // dbg!(&self.polys[i]);
-            self.polys[i] = self.polys[i].partial_evaluate(partial_eval);
-            // println!("Doneeeeeeeeee Sum Poly");
-        }
+        let new_polys: Vec<ProductPoly<F>> = (0..deg)
+            .map(|i| self.polys[i].partial_evaluate(partial_eval))
+            .collect();
 
-        SumPoly::new(self.polys.clone())
+        SumPoly::new(new_polys)
     }
 
-    pub fn evaluate(&mut self, values: Vec<F>) -> F {
+    pub fn evaluate(&self, values: Vec<F>) -> F {
         let mut sum: F = F::zero();
         let deg: usize = self.degree().try_into().unwrap();
 
@@ -84,6 +80,7 @@ impl<F: PrimeField> SumPoly<F> {
 mod tests {
     use super::*;
     use ark_bn254::Fr;
+    use crate::multilinear::multilinear_poly::MultilinearPoly;
 
     #[test]
     fn test_sum_poly() {
@@ -96,7 +93,7 @@ mod tests {
         let poly4 = MultilinearPoly::new(vec![Fr::from(7), Fr::from(8)], 1);
         let prod2 = ProductPoly::new(vec![poly3, poly4]);
 
-        let mut sum_poly = SumPoly::new(vec![prod1, prod2]);
+        let sum_poly = SumPoly::new(vec![prod1, prod2]);
 
         // Test basic properties
         assert_eq!(sum_poly.polys.len(), 2);
@@ -117,7 +114,7 @@ mod tests {
         assert_eq!(sum_poly.polys.len(), 0);
 
         // Test evaluation of empty sum poly
-        let mut empty_sum = SumPoly::<Fr>::new(vec![]);
+        let empty_sum = SumPoly::<Fr>::new(vec![]);
         let result = empty_sum.evaluate(vec![]);
         assert_eq!(result, Fr::from(0)); // Empty sum should return 0
     }
@@ -127,7 +124,7 @@ mod tests {
         // Test sum poly with single product term
         let poly1 = MultilinearPoly::new(vec![Fr::from(2), Fr::from(3)], 1);
         let prod = ProductPoly::new(vec![poly1]);
-        let mut sum_poly = SumPoly::new(vec![prod]);
+        let sum_poly = SumPoly::new(vec![prod]);
 
         let values = vec![Fr::from(1)];
         let result = sum_poly.evaluate(values);
@@ -152,7 +149,7 @@ mod tests {
             1,
         )]);
 
-        let mut sum_poly = SumPoly::new(vec![prod1, prod2, prod3]);
+        let sum_poly = SumPoly::new(vec![prod1, prod2, prod3]);
 
         let values = vec![Fr::from(1)];
 
