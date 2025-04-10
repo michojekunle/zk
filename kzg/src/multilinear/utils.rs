@@ -29,17 +29,18 @@ pub fn generate_lagrange_basis<F: PrimeField>(taus: &[F]) -> Vec<F> {
 }
 
 /// Encrypts the generated Lagrange basis polynomials using generator points G1.
-pub fn encrypt_lagrange_basis<E: Pairing>(lagrange_basis: &[E::ScalarField]) -> Vec<E::G1> {
+pub fn encrypt_lagrange_basis<E: Pairing, F: PrimeField>(lagrange_basis: &[F]) -> Vec<E::G1> {
     lagrange_basis
         .iter()
-        .map(|coeff| E::G1::generator().mul(coeff))
+        .map(|coeff| E::G1::generator().mul_bigint(coeff.into_bigint()))
         .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ark_bn254::{Bn254, Fr};
+    use ark_bn254::Fr;
+    use ark_bls12_381::Bls12_381;
 
     #[test]
     fn test_generate_lagrange_basis() {
@@ -60,7 +61,7 @@ mod tests {
         let lagrange_basis = generate_lagrange_basis(&taus);
 
         // Encrypt the generated Lagrange basis polynomials
-        let encrypted_basis = encrypt_lagrange_basis::<Bn254>(&lagrange_basis);
+        let encrypted_basis = encrypt_lagrange_basis::<Bls12_381, Fr>(&lagrange_basis);
 
         // Basic assertions to ensure the function works as expected
         assert_eq!(encrypted_basis.len(), lagrange_basis.len());

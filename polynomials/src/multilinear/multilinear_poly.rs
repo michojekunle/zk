@@ -7,6 +7,11 @@ pub struct MultilinearPoly<F: PrimeField> {
     pub evals: Vec<F>,
 }
 
+pub enum BlowUpDirection {
+    Left,
+    Right,
+}
+
 impl<F: PrimeField> MultilinearPoly<F> {
     pub fn new(evals: Vec<F>, n_vars: usize) -> Self {
         MultilinearPoly { evals, n_vars }
@@ -30,9 +35,11 @@ impl<F: PrimeField> MultilinearPoly<F> {
 
         let unique_pairs_evals = Self::get_unique_pairs_evals(&self.evals, pos);
 
-        new_evals.extend(unique_pairs_evals.iter().map(|(c_i, c_pair_index)| {
-            *c_i + val * (*c_pair_index - c_i)
-        }));
+        new_evals.extend(
+            unique_pairs_evals
+                .iter()
+                .map(|(c_i, c_pair)| *c_i + val * (*c_pair - c_i)),
+        );
 
         MultilinearPoly::new(new_evals, self.n_vars - 1)
     }
@@ -48,9 +55,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
     }
 
     pub fn scalar_mul(&self, scalar: F) -> Self {
-        let new_evals = self.evals.iter().map(|e| {
-            scalar * *e
-        }).collect();
+        let new_evals = self.evals.iter().map(|e| scalar * *e).collect();
 
         MultilinearPoly::new(new_evals, self.n_vars)
     }
@@ -80,8 +85,45 @@ impl<F: PrimeField> MultilinearPoly<F> {
         evals
     }
 
-     // Adds two polynomials of same variables together
-     pub fn _add(&self, other: &MultilinearPoly<F>) -> Self {
+    pub fn compute_quotient_remainder(&self, divisor: &F, pos: usize) -> (Vec<F>, Self) {
+        let unique_pairs_evals = Self::get_unique_pairs_evals(&self.evals, pos);
+
+        let remainder = self.partial_evaluate((pos, *divisor));
+        let quotient = unique_pairs_evals
+            .iter()
+            .map(|(c_i, c_pair)| *c_pair - *c_i)
+            .collect();
+
+        (quotient, remainder)
+    }
+
+    pub fn blow_up_n_times(direction: BlowUpDirection, evals: &Vec<F>, n: usize) -> Vec<F> {
+        let mut new_evals = evals.clone();
+
+        for _ in 0..n {
+            let mut temp_evals = Vec::with_capacity(new_evals.len() * 2);
+
+            match direction {
+                BlowUpDirection::Left => {
+                    temp_evals.extend_from_slice(&new_evals);
+                    temp_evals.extend_from_slice(&new_evals);
+                }
+                BlowUpDirection::Right => {
+                    for &eval in new_evals.iter() {
+                        temp_evals.push(eval); // Duplicate the eval in the first position
+                        temp_evals.push(eval); // Retain the original eval in the second position
+                    }
+                }
+            }
+
+            new_evals = temp_evals;
+        }
+
+        new_evals
+    }
+
+    // Adds two polynomials of same variables together
+    pub fn _add(&self, other: &MultilinearPoly<F>) -> Self {
         if self.n_vars != other.n_vars {
             panic!("Polynomial must have the same length");
         };
@@ -89,8 +131,7 @@ impl<F: PrimeField> MultilinearPoly<F> {
         let mut new_evals = vec![F::zero(); other.evals.len()];
 
         (0..self.evals.len()).for_each(|idx| {
-            new_evals[idx] +=
-                self.evals[idx] + other.evals[idx];
+            new_evals[idx] += self.evals[idx] + other.evals[idx];
         });
 
         Self::new(new_evals, self.n_vars)
@@ -248,5 +289,64 @@ pub mod tests {
         assert_eq!(new_poly.evals[3], Fq::from(9));
         assert_eq!(new_poly.evals[6], Fq::from(6));
         assert_eq!(new_poly.evals[7], Fq::from(15));
+    }
+
+    #[test]
+    fn test_blow_up_right() {
+        // Single-variable polynomial: 2x
+        let evals = to_field(vec![0, 2]); // Evaluations for x = {0, 1}
+
+        // Blow up to two variables (add y as 0y)
+        let result = MultilinearPoly::<Fr>::blow_up_n_times(BlowUpDirection::Right, &evals, 1);
+
+        // Expected result: [0, 0, 2, 2]
+        assert_eq!(result, to_field(vec![0, 0, 2, 2]));
+
+        // Two-variable polynomial: 2x + 3y
+        let evals = to_field(vec![0, 4, 0, 6]);
+        let result = MultilinearPoly::<Fr>::blow_up_n_times(BlowUpDirection::Right, &evals, 1);
+        dbg!(&result);
+        assert_eq!(result, to_field(vec![0, 0, 4, 4, 0, 0, 6, 6]));
+
+        // Three-variable polynomial: 2abc + 3ab + 4bc + 5c
+        let evals = to_field(vec![0, 5, 3, 12, 0, 5, 5, 14]); // Evaluations for (a, b, c)
+
+        // Blow up to four variables (add d as 0d)
+        let result = MultilinearPoly::<Fr>::blow_up_n_times(BlowUpDirection::Right, &evals, 1);
+
+        // Expected result: [0, 0, 5, 5, 3, 3, 12, 12, 0, 0, 5, 5, 5, 5, 14, 14]
+        assert_eq!(
+            result,
+            to_field(vec![0, 0, 5, 5, 3, 3, 12, 12, 0, 0, 5, 5, 5, 5, 14, 14])
+        );
+    }
+
+    #[test]
+    fn test_blow_up_left() {
+        // Single-variable polynomial: 2y
+        let evals = to_field(vec![0, 2]); // Evaluations for y = {0, 1}
+
+        // Blow up to two variables (add x as 0x, BlowUpDirection::Left)
+        let result = MultilinearPoly::<Fr>::blow_up_n_times(BlowUpDirection::Left, &evals, 1);
+
+        // Expected result: [0, 2, 0, 2]
+        assert_eq!(result, to_field(vec![0, 2, 0, 2]));
+
+        let evals = to_field(vec![0, 0, 3, 7]);
+        let result = MultilinearPoly::<Fr>::blow_up_n_times(BlowUpDirection::Left, &evals, 1);
+        dbg!(&result);
+        assert_eq!(result, to_field(vec![0, 0, 3, 7, 0, 0, 3, 7]));
+
+        // Three-variable polynomial: 2bcd + 3bc + 4cd + 5d
+        let evals = to_field(vec![0, 5, 0, 9, 0, 5, 3, 14]); // Evaluations for (b, c, d)
+
+        // Blow up to four variables (add a as 0a, BlowUpDirection::Left)
+        let result = MultilinearPoly::<Fr>::blow_up_n_times(BlowUpDirection::Left, &evals, 1);
+
+        // Expected result: [0, 0, 5, 5, 3, 3, 12, 12, 0, 0, 5, 5, 5, 5, 14, 14]
+        assert_eq!(
+            result,
+            to_field(vec![0, 5, 0, 9, 0, 5, 3, 14, 0, 5, 0, 9, 0, 5, 3, 14])
+        );
     }
 }
