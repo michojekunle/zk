@@ -1,16 +1,13 @@
-use crate::multilinear::protocol::MultilinearKZGProof;
-use crate::multilinear::utils::{encrypt_lagrange_basis, generate_lagrange_basis};
+use crate::multilinear::{
+    protocol::MultilinearKZGProof, trusted_setup::TrustedSetup, verifier::MultilinearKZGVerifier,
+};
 use ark_bls12_381::{Bls12_381, G1Projective};
 use ark_bn254::{Bn254, Fr};
-use ark_ec::pairing::Pairing;
-use ark_ec::PrimeGroup;
+use ark_ec::{pairing::Pairing, PrimeGroup};
 use ark_ff::{PrimeField, UniformRand, Zero};
-use ark_std::rand::rngs::StdRng;
-use ark_std::rand::SeedableRng;
-use polynomials::multilinear::multilinear_poly::{MultilinearPoly, BlowUpDirection};
-use std::cmp::max;
-use std::marker::PhantomData;
-use std::ops::Mul;
+use ark_std::rand::{rngs::StdRng, SeedableRng};
+use polynomials::multilinear::multilinear_poly::{BlowUpDirection, MultilinearPoly};
+use std::{cmp::max, marker::PhantomData, ops::Mul};
 
 #[derive(Clone, Debug)]
 pub struct MultilinearKZGProver<F: PrimeField, E: Pairing> {
@@ -20,8 +17,6 @@ pub struct MultilinearKZGProver<F: PrimeField, E: Pairing> {
 
 impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
     fn evaluate_at_tau(poly: &MultilinearPoly<F>, encrypted_lagrange_basis: &[E::G1]) -> E::G1 {
-        dbg!(&poly.evals.len());
-        dbg!(&encrypted_lagrange_basis.len());
         assert!(
             poly.evals.len() == encrypted_lagrange_basis.len(),
             "Length mismatch"
@@ -49,13 +44,17 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
         poly: &MultilinearPoly<F>,
         encrypted_lagrange_basis: &[E::G1],
     ) -> MultilinearKZGProof<F, E> {
+        // dbg!(&poly);
+        // dbg!(&openings);
         let v: F = poly.evaluate(openings.to_vec());
+        dbg!(&v);
         let mut q_taus = Vec::with_capacity(openings.len());
 
         let f_minus_v = MultilinearPoly::new(
             poly.evals.iter().map(|eval| *eval - v).collect(),
             poly.n_vars,
         );
+        dbg!(&f_minus_v);
 
         let mut dividend = f_minus_v;
 
@@ -63,8 +62,11 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
             // divide the polynomial by each opening as a factor
             // e.g. if the roots are a = 6, b = 7, c = 0; we divide the polynomial by a - 6, remainder by b - 7 and lastly, c - 0;
             // But in actual fact, we are evaluating the polynomial at the variable points.
+            dbg!(&dividend);
+            dbg!(&opening);
             let (mut quotient, remainder) = dividend.compute_quotient_remainder(opening, dividend.n_vars - 1);
-
+            dbg!(&quotient);
+            dbg!(&remainder);
             dividend = remainder;
 
             quotient = MultilinearPoly::blow_up_n_times(
@@ -72,6 +74,8 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
                 &quotient,
                 max(i + 1, openings.len() - quotient.len().ilog2() as usize),
             );
+
+            dbg!(&quotient);
 
             let q_tau: E::G1 = Self::evaluate_at_tau(
                 &MultilinearPoly::new(quotient.to_vec(), quotient.len().ilog2() as usize),
@@ -83,12 +87,12 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
 
         MultilinearKZGProof::new(v, q_taus)
     }
+    
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::multilinear::trusted_setup::TrustedSetup;
 
     #[test]
     fn test_evaluate_at_tau() {

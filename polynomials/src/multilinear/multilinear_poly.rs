@@ -1,5 +1,5 @@
 use ark_ff::{BigInteger, PrimeField};
-use std::ops::Add;
+use std::{cmp::max, ops::Add};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultilinearPoly<F: PrimeField> {
@@ -34,13 +34,21 @@ impl<F: PrimeField> MultilinearPoly<F> {
         let mut new_evals = Vec::with_capacity(length / 2);
 
         let unique_pairs_evals = Self::get_unique_pairs_evals(&self.evals, pos);
+        dbg!(&unique_pairs_evals);
+        dbg!(&val);
 
         new_evals.extend(
             unique_pairs_evals
                 .iter()
-                .map(|(c_i, c_pair)| *c_i + val * (*c_pair - c_i)),
+                .map(|(c_i, c_pair)| {
+                    let res = *c_i + val * (*c_pair - c_i);
+                    dbg!(&res);
+
+                    res
+                }),
         );
 
+        dbg!(&new_evals);
         MultilinearPoly::new(new_evals, self.n_vars - 1)
     }
 
@@ -86,13 +94,36 @@ impl<F: PrimeField> MultilinearPoly<F> {
     }
 
     pub fn compute_quotient_remainder(&self, divisor: &F, pos: usize) -> (Vec<F>, Self) {
+        dbg!(&pos);
         let unique_pairs_evals = Self::get_unique_pairs_evals(&self.evals, pos);
+
+        dbg!(self);
+        dbg!(&unique_pairs_evals);
 
         let remainder = self.partial_evaluate((pos, *divisor));
         let quotient = unique_pairs_evals
             .iter()
-            .map(|(c_i, c_pair)| *c_pair - *c_i)
+            .map(|(c_i, c_pair)| {
+                dbg!(&c_i, &c_pair);
+
+                *c_pair - *c_i
+            })
             .collect();
+
+        // let eval_0 = self.partial_evaluate((pos, F::zero()));
+        // let eval_1 = self.partial_evaluate((pos, F::one()));
+
+        // dbg!(&eval_0, &eval_1);
+
+        // let quotient = eval_1
+        //     .evals
+        //     .iter()
+        //     .zip(eval_0.evals.iter())
+        //     .map(|(a, b)| *a - *b)
+        //     .collect::<Vec<F>>();
+
+        dbg!(&quotient);
+        // quotient.extend(quotient.iter().map(|e| *e - *divisor));
 
         (quotient, remainder)
     }

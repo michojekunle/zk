@@ -1,15 +1,13 @@
-use crate::multilinear::utils::{generate_lagrange_basis, encrypt_lagrange_basis};
-use ark_ec::pairing::Pairing;
-use ark_ec::PrimeGroup;
+use crate::multilinear::utils::{encrypt_lagrange_basis, generate_lagrange_basis};
+use ark_ec::{pairing::Pairing, PrimeGroup};
 use ark_ff::PrimeField;
-use std::ops::Mul;
 use ark_std::UniformRand;
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::Mul};
 
 pub struct TrustedSetup<E: Pairing, F: PrimeField> {
     pub encrypted_taus: Vec<E::G2>,
     pub encrypted_lagrange_basis: Vec<E::G1>,
-    _marker: PhantomData<F>,   
+    _marker: PhantomData<F>,
 }
 
 impl<E: Pairing, F: PrimeField> TrustedSetup<E, F> {
@@ -36,10 +34,8 @@ impl<E: Pairing, F: PrimeField> TrustedSetup<E, F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ark_bn254::Fr;
-    use ark_std::rand::rngs::StdRng;
-    use ark_bls12_381::Bls12_381;
-    use ark_std::rand::SeedableRng;
+    use ark_bls12_381::{Fr, Bls12_381};
+    use ark_std::rand::{rngs::StdRng, SeedableRng};
 
     #[test]
     fn test_trusted_setup() {
@@ -63,4 +59,3 @@ mod tests {
         assert_eq!(setup.encrypted_lagrange_basis.len(), 1 << taus.len());
     }
 }
-
