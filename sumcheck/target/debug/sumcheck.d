@@ -1,1 +1,0 @@
-/home/devvmichael/blockchain/zk/sumcheck/target/debug/sumcheck: /home/devvmichael/blockchain/zk/sumcheck/src/fiat_shamir.rs /home/devvmichael/blockchain/zk/sumcheck/src/lib.rs /home/devvmichael/blockchain/zk/sumcheck/src/main.rs /home/devvmichael/blockchain/zk/sumcheck/src/multilinear_poly.rs /home/devvmichael/blockchain/zk/sumcheck/src/sumcheck_protocol.rs
