@@ -1,0 +1,6 @@
+[package]
+name = "simple_test"
+type = "bin"
+authors = [""]
+
+[dependencies]

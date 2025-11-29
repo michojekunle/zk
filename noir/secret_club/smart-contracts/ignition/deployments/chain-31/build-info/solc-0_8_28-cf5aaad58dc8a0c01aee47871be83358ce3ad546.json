@@ -1,0 +1,39 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-cf5aaad58dc8a0c01aee47871be83358ce3ad546",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/SecretNFTClub.sol": "project/contracts/SecretNFTClub.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/SecretNFTClub.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\ninterface IVerifier {\n    function verify(\n        bytes calldata _proof,\n        bytes32[] calldata _publicInputs\n    ) external view returns (bool);\n}\n\ncontract SecretNFTClub {\n    IVerifier public immutable verifier;\n    bytes32 public immutable secretHash;\n\n    mapping(address => bool) public hasJoined;\n    mapping(address => uint256) public memberTokenId;\n\n    uint256 private _nextTokenId;\n\n    event MemberJoined(address indexed member, uint256 indexed tokenId);\n\n    error AlreadyMember();\n    error InvalidProof();\n\n    constructor(bytes32 _secretHash, address _verifier) {\n        secretHash = _secretHash;\n        verifier = IVerifier(_verifier);\n    }\n\n    function join(bytes calldata proof) external {\n        if (hasJoined[msg.sender]) revert AlreadyMember();\n\n        // Prepare public inputs (just the secret hash)\n        bytes32[] memory publicInputs = new bytes32[](1);\n        publicInputs[0] = secretHash;\n\n        // Verify the zero-knowledge proof\n        if (!verifier.verify(proof, publicInputs)) revert InvalidProof();\n\n        // Proof verified! Grant membership\n        uint256 tokenId = _nextTokenId++;\n        hasJoined[msg.sender] = true;\n        memberTokenId[msg.sender] = tokenId;\n\n        emit MemberJoined(msg.sender, tokenId);\n    }\n\n    function isMember(address account) external view returns (bool) {\n        return hasJoined[account];\n    }\n\n    function totalMembers() external view returns (uint256) {\n        return _nextTokenId;\n    }\n}\n"
+      }
+    }
+  }
+}

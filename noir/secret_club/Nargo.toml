@@ -1,0 +1,7 @@
+[package]
+name = "secret_club"
+type = "bin"
+authors = ["michojekunle"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
