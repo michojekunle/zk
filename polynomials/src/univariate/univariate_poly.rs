@@ -121,8 +121,6 @@ impl<F: PrimeField> Add for UnivariatePoly<F> {
     }
 }
 
-fn main() {}
-
 #[cfg(test)]
 mod test {
     use super::*;

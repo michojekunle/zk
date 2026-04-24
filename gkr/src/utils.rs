@@ -36,7 +36,7 @@ pub fn get_folded_polys<F: PrimeField>(
 
     let muli_b = r_b
         .iter()
-        .fold(muli_a_b_c.clone(), |mut acc, &b| {
+        .fold(muli_a_b_c.clone(), | acc, &b| {
             acc.partial_evaluate((acc.n_vars - 1, b))
         })
         .scalar_mul(*alpha);
@@ -45,7 +45,7 @@ pub fn get_folded_polys<F: PrimeField>(
 
     let addi_b = r_b
         .iter()
-        .fold(addi_a_b_c.clone(), |mut acc, &b| {
+        .fold(addi_a_b_c.clone(), | acc, &b| {
             acc.partial_evaluate((acc.n_vars - 1, b))
         })
         .scalar_mul(*alpha);
@@ -53,7 +53,7 @@ pub fn get_folded_polys<F: PrimeField>(
     // Apply partial evaluation for r_c and scale by beta
     let muli_c = r_c
         .iter()
-        .fold(muli_a_b_c, |mut acc, &c| {
+        .fold(muli_a_b_c, | acc, &c| {
             acc.partial_evaluate((acc.n_vars - 1, c))
         })
         .scalar_mul(*beta);

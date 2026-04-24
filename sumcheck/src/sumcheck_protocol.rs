@@ -35,7 +35,7 @@ pub fn prove<F: PrimeField>(poly: &MultilinearPoly<F>, claimed_sum: F) -> Proof<
 
     let mut poly = poly.clone();
 
-    for i in 0..poly.n_vars {
+    for _i in 0..poly.n_vars {
         let idx = poly.n_vars - 1;
 
         let round_poly: [F; 2] = [

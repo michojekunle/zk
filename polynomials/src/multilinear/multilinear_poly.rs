@@ -1,5 +1,5 @@
 use ark_ff::{BigInteger, PrimeField};
-use std::{cmp::max, ops::Add};
+use std::{ops::Add};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MultilinearPoly<F: PrimeField> {

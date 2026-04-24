@@ -1,7 +1,7 @@
 use crate::circuit::{Circuit, Op};
 use crate::{
-    protocol::{GKRProof, GKRProofWithKZG},
-    utils::{get_evaluated_muli_addi_at_a, get_folded_claim_sum, get_folded_polys},
+    protocol::{GKRProof, },
+    utils::{get_evaluated_muli_addi_at_a, get_folded_polys},
 };
 use ark_ec::pairing::Pairing;
 use ark_ff::{BigInteger, PrimeField};
