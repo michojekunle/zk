@@ -110,7 +110,7 @@ impl<F: PrimeField> GKRProver<F> {
             random_values = sumcheck_proof
                 .rand_challenges
                 .iter()
-                .map(|chal| *chal)
+                .copied()
                 .collect();
             running_layer_poly = next_w_i;
 

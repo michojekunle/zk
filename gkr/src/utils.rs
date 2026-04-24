@@ -9,15 +9,15 @@ pub fn get_evaluated_muli_addi_at_a<F: PrimeField>(
     let mut new_muli_b_c = muli_a_b_c;
     let mut new_addi_b_c = addi_a_b_c;
 
-    for i in 0..random_values.len() {
+    for item in &random_values {
         if new_muli_b_c.n_vars != 0 {
             new_muli_b_c =
-                new_muli_b_c.partial_evaluate((new_muli_b_c.n_vars - 1, random_values[i]));
+                new_muli_b_c.partial_evaluate((new_muli_b_c.n_vars - 1, *item));
         }
 
         if new_addi_b_c.n_vars != 0 {
             new_addi_b_c =
-                new_addi_b_c.partial_evaluate((new_addi_b_c.n_vars - 1, random_values[i]));
+                new_addi_b_c.partial_evaluate((new_addi_b_c.n_vars - 1, *item));
         }
     }
 
