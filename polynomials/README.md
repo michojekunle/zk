@@ -17,7 +17,7 @@ Here is where you can find the specific math and cryptographic implementations:
 - [x] [**Multilinear / Multivariate Polynomials**](./src/multilinear) (Representations and Evaluations, crucial for Sumcheck!)
 - [x] [**Composed Polynomials**](./src/composed) 
 - [x] [**Shamir's Secret Sharing**](./src/shamir_secret) implementation
-- [ ] Fast Fourier Transforms (FFT) for faster multiplications
+- [ ] [Fast Fourier Transforms (FFT)](../fft) for faster multiplications
 
 ## 🚧 What's next?
 
