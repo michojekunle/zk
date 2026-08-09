@@ -52,7 +52,7 @@ mod tests {
         let layer_1 = vec![gate_e, gate_f];
         let layer_0 = vec![gate_g];
 
-        let circuit = Circuit::<Fq>::new(vec![layer_0, layer_1, layer_2]);
+        let circuit = Circuit::<Fq>::new(vec![layer_0, layer_1, layer_2], 8);
 
         let input = vec![
             Fq::from(1u64),
@@ -78,6 +78,37 @@ mod tests {
         let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
 
         assert!(is_verified);
-        dbg!(is_verified);
+    }
+    
+    #[test]
+    fn test_malicious_prover_wrong_output() {
+        let (mut circuit, input) = init_circuit();
+        let mut transcript_p = FiatShamir::<Keccak256, Fq>::new();
+        let mut transcript_v = FiatShamir::<Keccak256, Fq>::new();
+
+        let mut gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript_p);
+        
+        // Malicious prover tampers with the output polynomial
+        gkr_proof.output_poly.evals[0] = Fq::from(999u64);
+        
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
+        
+        assert!(!is_verified);
+    }
+    
+    #[test]
+    fn test_malicious_prover_wrong_initial_claim() {
+        let (mut circuit, input) = init_circuit();
+        let mut transcript_p = FiatShamir::<Keccak256, Fq>::new();
+        let mut transcript_v = FiatShamir::<Keccak256, Fq>::new();
+
+        let mut gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript_p);
+        
+        // Malicious prover tampers with the initial claim of the first sumcheck
+        gkr_proof.sumcheck_proofs[0].initial_claimed_sum = Fq::from(999u64);
+        
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
+        
+        assert!(!is_verified);
     }
 }

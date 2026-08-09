@@ -21,6 +21,7 @@ pub enum Op {
 #[derive(Debug)]
 pub struct Circuit<F: PrimeField> {
     layers: Vec<Vec<Gate>>,
+    input_len: usize,
     _phantom: PhantomData<F>,
 }
 
@@ -36,9 +37,10 @@ impl Gate {
 }
 
 impl<F: PrimeField> Circuit<F> {
-    pub(crate) fn new(layers: Vec<Vec<Gate>>) -> Self {
+    pub(crate) fn new(layers: Vec<Vec<Gate>>, input_len: usize) -> Self {
         Circuit {
             layers,
+            input_len,
             _phantom: PhantomData,
         }
     }
@@ -83,8 +85,13 @@ impl<F: PrimeField> Circuit<F> {
 
     pub(crate) fn add_mul_i(&self, layer_id: usize, op: Op) -> MultilinearPoly<F> {
         let layer = &self.layers[layer_id];
-        let l_i_vars = (layer_id as u32).max(1);
-        let l_i_plus_1_vars = layer_id as u32 + 1;
+        
+        let l_i_vars = (layer.len() as f64).log2().ceil().max(1.0) as u32;
+        let l_i_plus_1_vars = if layer_id + 1 < self.layers.len() {
+            (self.layers[layer_id + 1].len() as f64).log2().ceil().max(1.0) as u32
+        } else {
+            (self.input_len as f64).log2().ceil().max(1.0) as u32
+        };
 
         // Calculate n_vars once (total bits = output + left + right)
         let n_vars = (l_i_vars + 2 * l_i_plus_1_vars) as usize;
@@ -178,7 +185,7 @@ mod tests {
         let layer_1 = vec![gate_e, gate_f];
         let layer_0 = vec![gate_g];
 
-        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
+        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2], 8);
 
         let input = vec![
             Fr::from(1u64),
@@ -208,7 +215,7 @@ mod tests {
         let layer_1 = vec![gate_e, gate_f];
         let layer_0 = vec![gate_g];
 
-        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
+        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2], 8);
 
         let input = vec![
             Fr::from(1u64),
@@ -244,7 +251,7 @@ mod tests {
         let layer_1 = vec![gate_e, gate_f];
         let layer_0 = vec![gate_g];
 
-        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
+        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2], 8);
 
         let circuit_add_0 = circuit.add_mul_i(0, Op::ADD);
         let circuit_add_1 = circuit.add_mul_i(1, Op::ADD);
@@ -278,7 +285,7 @@ mod tests {
         let layer_1 = vec![gate_e, gate_f];
         let layer_0 = vec![gate_g];
 
-        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2]);
+        let circuit = Circuit::<Fr>::new(vec![layer_0, layer_1, layer_2], 8);
 
         let circuit_mul_0 = circuit.add_mul_i(0, Op::MUL);
         let circuit_mul_1 = circuit.add_mul_i(1, Op::MUL);
