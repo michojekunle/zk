@@ -12,10 +12,10 @@ Imagine an arithmetic circuit as a bunch of layers (gates doing addition or mult
 
 ## ✅ What's implemented so far
 
-- [ ] Circuit representation (layers, gates, wires)
-- [ ] Multilinear extension generation for layers
-- [ ] Integrating the sumcheck protocol for layer-to-layer reduction
-- [ ] End-to-end Prover and Verifier interaction
+- [x] Circuit representation (layers, gates, wires)
+- [x] Multilinear extension generation for layers
+- [x] Integrating the sumcheck protocol for layer-to-layer reduction
+- [x] End-to-end Prover and Verifier interaction
 
 ## 🚧 What's next?
 
