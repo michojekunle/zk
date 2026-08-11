@@ -12,14 +12,14 @@ Instead of sending an entire massive polynomial, a prover can send a tiny "commi
 
 ## ✅ What's implemented so far
 
-- [ ] Trusted setup generation
-- [ ] Polynomial commitment logic
-- [ ] Evaluation proof generation
-- [ ] Verification logic using pairings
+- [x] Trusted setup generation
+- [x] Polynomial commitment logic
+- [x] Evaluation proof generation
+- [x] Verification logic using pairings
 
 ## 🚧 What's next?
 
-- Batch proofs (proving multiple evaluations at once)
+- Batch proofs (proving multiple evaluations at once, I think this is implemented already hahaha :)) 
 - Optimizing polynomial evaluations
 
 ## 💻 How to play around with this

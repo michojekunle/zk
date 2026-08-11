@@ -44,17 +44,13 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
         poly: &MultilinearPoly<F>,
         encrypted_lagrange_basis: &[E::G1],
     ) -> MultilinearKZGProof<F, E> {
-        // dbg!(&poly);
-        // dbg!(&openings);
         let v: F = poly.evaluate(openings.to_vec());
-        dbg!(&v);
         let mut q_taus = Vec::with_capacity(openings.len());
 
         let f_minus_v = MultilinearPoly::new(
             poly.evals.iter().map(|eval| *eval - v).collect(),
             poly.n_vars,
         );
-        dbg!(&f_minus_v);
 
         let mut dividend = f_minus_v;
 
@@ -62,11 +58,8 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
             // divide the polynomial by each opening as a factor
             // e.g. if the roots are a = 6, b = 7, c = 0; we divide the polynomial by a - 6, remainder by b - 7 and lastly, c - 0;
             // But in actual fact, we are evaluating the polynomial at the variable points.
-            dbg!(&dividend);
-            dbg!(&opening);
             let (mut quotient, remainder) = dividend.compute_quotient_remainder(opening, dividend.n_vars - 1);
-            dbg!(&quotient);
-            dbg!(&remainder);
+            
             dividend = remainder;
 
             quotient = MultilinearPoly::blow_up_n_times(
@@ -74,8 +67,6 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
                 &quotient,
                 max(i + 1, openings.len() - quotient.len().ilog2() as usize),
             );
-
-            dbg!(&quotient);
 
             let q_tau: E::G1 = Self::evaluate_at_tau(
                 &MultilinearPoly::new(quotient.to_vec(), quotient.len().ilog2() as usize),

@@ -32,7 +32,7 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGVerifier<F, E> {
             .iter()
             .enumerate()
             .map(|(i, q_tau)| {
-                let tau_i = encrypted_taus[openings.len() - 1 - i];
+                let tau_i = encrypted_taus[i];
                 let g2_a = E::G2::generator().mul_bigint(openings[i].into_bigint());
 
                 E::pairing(*q_tau, tau_i - g2_a)

@@ -15,7 +15,7 @@ pub fn generate_lagrange_basis<F: PrimeField>(taus: &[F]) -> Vec<F> {
     for i in 0..dim {
         let mut product = F::one();
         for j in 0..n {
-            let bit = (i >> j) & 1;
+            let bit = (i >> (n - 1 - j)) & 1;
             if bit == 1 {
                 product *= taus[j];
             } else {
