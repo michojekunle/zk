@@ -6,6 +6,7 @@ use kzg::multilinear::{
     prover::MultilinearKZGProver, trusted_setup::TrustedSetup, verifier::MultilinearKZGVerifier,
 };
 use polynomials::multilinear::multilinear_poly::MultilinearPoly;
+use std::hint::black_box;
 
 fn setup(n_vars: usize) -> (TrustedSetup<Bls12_381, Fr>, Vec<Fr>, MultilinearPoly<Fr>) {
     let mut rng = StdRng::seed_from_u64(42);
@@ -33,7 +34,7 @@ fn kzg_benchmark(c: &mut Criterion, n_vars: usize) {
 
     c.bench_function(&format!("kzg_commit/{} variables", n_vars), |b| {
         b.iter(|| {
-            criterion::black_box(MultilinearKZGProver::<Fr, Bls12_381>::compute_commitment(
+            black_box(MultilinearKZGProver::<Fr, Bls12_381>::compute_commitment(
                 &poly,
                 &trusted_setup.encrypted_lagrange_basis,
             ))
@@ -42,7 +43,7 @@ fn kzg_benchmark(c: &mut Criterion, n_vars: usize) {
 
     c.bench_function(&format!("kzg_prover/{} variables", n_vars), |b| {
         b.iter(|| {
-            criterion::black_box(MultilinearKZGProver::<Fr, Bls12_381>::prove(
+            black_box(MultilinearKZGProver::<Fr, Bls12_381>::prove(
                 &openings,
                 &poly,
                 &trusted_setup.encrypted_lagrange_basis,
@@ -72,7 +73,7 @@ fn kzg_benchmark(c: &mut Criterion, n_vars: usize) {
 
     c.bench_function(&format!("kzg_verifier/{} variables", n_vars), |b| {
         b.iter(|| {
-            criterion::black_box(MultilinearKZGVerifier::<Fr, Bls12_381>::verify(
+            black_box(MultilinearKZGVerifier::<Fr, Bls12_381>::verify(
                 &commitment,
                 &openings,
                 &proof,

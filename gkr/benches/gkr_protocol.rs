@@ -5,6 +5,7 @@ use gkr::prover::GKRProver;
 use gkr::verifier::GKRVerifier;
 use sha3::Keccak256;
 use sumcheck::fiat_shamir::FiatShamir;
+use std::hint::black_box;
 
 fn build_circuit(input_len: usize) -> (Circuit<Fq>, Vec<Fq>) {
     let mut layers = Vec::new();
@@ -60,12 +61,12 @@ fn benchmark_gkr(c: &mut Criterion, input_size: usize) {
 
     // bench prover
     c.bench_function(&format!("gkr_prover/{}_inputs", input_size), |b| {
-        b.iter(|| GKRProver::prove(&input, &mut circuit, &mut transcript_p))
+        b.iter(|| black_box(GKRProver::prove(&input, &mut circuit, &mut transcript_p)))
     });
 
     // bench verifier
     c.bench_function(&format!("gkr_verifier/{}_inputs", input_size), |b| {
-        b.iter(|| GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, &gkr_proof))
+        b.iter(|| black_box(GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, &gkr_proof)))
     });
 }
 
