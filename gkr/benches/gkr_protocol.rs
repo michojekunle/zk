@@ -4,8 +4,8 @@ use gkr::circuit::{Circuit, Gate, Op};
 use gkr::prover::GKRProver;
 use gkr::verifier::GKRVerifier;
 use sha3::Keccak256;
-use sumcheck::fiat_shamir::FiatShamir;
 use std::hint::black_box;
+use sumcheck::fiat_shamir::FiatShamir;
 
 fn build_circuit(input_len: usize) -> (Circuit<Fq>, Vec<Fq>) {
     let mut layers = Vec::new();
@@ -53,25 +53,47 @@ fn build_circuit(input_len: usize) -> (Circuit<Fq>, Vec<Fq>) {
 }
 
 fn benchmark_gkr(c: &mut Criterion, input_size: usize) {
-    let (mut circuit, input) = build_circuit(input_size);
-    let mut transcript_p = FiatShamir::<Keccak256, Fq>::new();
-    let mut transcript_v = FiatShamir::<Keccak256, Fq>::new();
+    let (mut prover_circuit, prover_input) = build_circuit(input_size);
+    let mut prover_transcript = FiatShamir::<Keccak256, Fq>::new();
 
-    let gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript_p);
+    let gkr_proof = GKRProver::prove(&prover_input, &mut prover_circuit, &mut prover_transcript);
 
     // bench prover
     c.bench_function(&format!("gkr_prover/{}_inputs", input_size), |b| {
-        b.iter(|| black_box(GKRProver::prove(&input, &mut circuit, &mut transcript_p)))
+        b.iter(|| {
+            let (mut circuit, input) = build_circuit(input_size);
+            let mut transcript_p = FiatShamir::<Keccak256, Fq>::new();
+            black_box(GKRProver::prove(&input, &mut circuit, &mut transcript_p))
+        })
     });
+
+    let (mut verify_circuit, verify_input) = build_circuit(input_size);
+    let mut verifier_transcript = FiatShamir::<Keccak256, Fq>::new();
+
+    assert!(GKRVerifier::verify(
+        &verify_input,
+        &mut verify_circuit,
+        &mut verifier_transcript,
+        &gkr_proof,
+    ));
 
     // bench verifier
     c.bench_function(&format!("gkr_verifier/{}_inputs", input_size), |b| {
-        b.iter(|| black_box(GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, &gkr_proof)))
+        b.iter(|| {
+            let (mut circuit, input) = build_circuit(input_size);
+            let mut transcript_v = FiatShamir::<Keccak256, Fq>::new();
+            black_box(GKRVerifier::verify(
+                &input,
+                &mut circuit,
+                &mut transcript_v,
+                &gkr_proof,
+            ))
+        })
     });
 }
 
 fn gkr_benchmarks(c: &mut Criterion) {
-    for size in [8, 64, 256] {
+    for size in [8, 16, 32, 64, 128, 256] {
         benchmark_gkr(c, size);
     }
 }
