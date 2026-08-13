@@ -34,7 +34,7 @@ impl<E: Pairing, F: PrimeField> TrustedSetup<E, F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ark_bls12_381::{Fr, Bls12_381};
+    use ark_bls12_381::{Bls12_381, Fr};
     use ark_std::rand::{rngs::StdRng, SeedableRng};
 
     #[test]

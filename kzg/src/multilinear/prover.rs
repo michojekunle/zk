@@ -58,8 +58,9 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
             // divide the polynomial by each opening as a factor
             // e.g. if the roots are a = 6, b = 7, c = 0; we divide the polynomial by a - 6, remainder by b - 7 and lastly, c - 0;
             // But in actual fact, we are evaluating the polynomial at the variable points.
-            let (mut quotient, remainder) = dividend.compute_quotient_remainder(opening, dividend.n_vars - 1);
-            
+            let (mut quotient, remainder) =
+                dividend.compute_quotient_remainder(opening, dividend.n_vars - 1);
+
             dividend = remainder;
 
             quotient = MultilinearPoly::blow_up_n_times(
@@ -78,7 +79,6 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGProver<F, E> {
 
         MultilinearKZGProof::new(v, q_taus)
     }
-    
 }
 
 #[cfg(test)]

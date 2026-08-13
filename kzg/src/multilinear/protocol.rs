@@ -1,7 +1,7 @@
 use crate::multilinear::{
     prover::MultilinearKZGProver, trusted_setup::TrustedSetup, verifier::MultilinearKZGVerifier,
 };
-use ark_bls12_381::{Fr, Bls12_381, G1Projective};
+use ark_bls12_381::{Bls12_381, Fr, G1Projective};
 use ark_ec::{pairing::Pairing, PrimeGroup};
 use ark_ff::{PrimeField, UniformRand, Zero};
 use ark_std::rand::{rngs::StdRng, SeedableRng};
@@ -42,21 +42,17 @@ mod tests {
         );
 
         // let taus: Vec<Fr> = (0..3).map(|_| Fr::rand(&mut rng)).collect();
-        let trusted_setup = TrustedSetup::<Bls12_381, Fr>::new(&[
-            Fr::from(5),
-            Fr::from(3),
-            Fr::from(2),
-        ]);
+        let trusted_setup =
+            TrustedSetup::<Bls12_381, Fr>::new(&[Fr::from(5), Fr::from(3), Fr::from(2)]);
         // let trusted_setup = TrustedSetup::<Bls12_381, Fr>::new(taus.as_slice());
 
         // let openings: Vec<Fr> = (0..3).map(|_| Fr::rand(&mut rng)).collect();
-        let openings: Vec<Fr> = vec![
-            Fr::from(2),
-            Fr::from(4),
-            Fr::from(0),
-        ];
-        
-        let commitment = MultilinearKZGProver::<Fr, Bls12_381>::compute_commitment(&poly, &trusted_setup.encrypted_lagrange_basis);
+        let openings: Vec<Fr> = vec![Fr::from(2), Fr::from(4), Fr::from(0)];
+
+        let commitment = MultilinearKZGProver::<Fr, Bls12_381>::compute_commitment(
+            &poly,
+            &trusted_setup.encrypted_lagrange_basis,
+        );
 
         let proof = MultilinearKZGProver::<Fr, Bls12_381>::prove(
             &openings,

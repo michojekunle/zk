@@ -39,8 +39,8 @@ pub fn encrypt_lagrange_basis<E: Pairing, F: PrimeField>(lagrange_basis: &[F]) -
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ark_bn254::Fr;
     use ark_bls12_381::Bls12_381;
+    use ark_bn254::Fr;
 
     #[test]
     fn test_generate_lagrange_basis() {
