@@ -19,7 +19,7 @@ impl<F: PrimeField> GKRVerifier<F> {
         input_layer: &[F],
         circuit: &mut Circuit<F>,
         transcript: &mut FiatShamir<Keccak256, F>,
-        proof: GKRProof<F>,
+        proof: &GKRProof<F>,
     ) -> bool {
         let layer_count = circuit.get_layer_count();
         let length_of_rs = proof.output_poly.n_vars;
@@ -38,7 +38,7 @@ impl<F: PrimeField> GKRVerifier<F> {
                 0 => {
                     let expected_output_eval = proof.output_poly.evaluate(random_values.to_vec());
                     if proof.sumcheck_proofs[layer_i].initial_claimed_sum != expected_output_eval {
-                        println!("Invalid initial claim for layer 0. Expected {}, got {}", expected_output_eval, proof.sumcheck_proofs[layer_i].initial_claimed_sum);
+                        // println!("Invalid initial claim for layer 0. Expected {}, got {}", expected_output_eval, proof.sumcheck_proofs[layer_i].initial_claimed_sum);
                         return false;
                     }
                     get_evaluated_muli_addi_at_a(muli_a_b_c, addi_a_b_c, random_values.to_vec())
@@ -49,7 +49,7 @@ impl<F: PrimeField> GKRVerifier<F> {
                     let (prev_w_b, prev_w_c) = proof.w_poly_evals[layer_i - 1];
                     let expected_claim = get_folded_claim_sum(&alpha, &beta, &prev_w_b, &prev_w_c);
                     if proof.sumcheck_proofs[layer_i].initial_claimed_sum != expected_claim {
-                        println!("Invalid initial claim for layer {}. Expected {}, got {}", layer_i, expected_claim, proof.sumcheck_proofs[layer_i].initial_claimed_sum);
+                        // println!("Invalid initial claim for layer {}. Expected {}, got {}", layer_i, expected_claim, proof.sumcheck_proofs[layer_i].initial_claimed_sum);
                         return false;
                     }
 
@@ -115,9 +115,9 @@ impl<F: PrimeField> GKRVerifier<F> {
                 + (new_muli_b_c_eval * (next_w_i_b_eval * next_w_i_c_eval));
 
             if fbc_eval != claimed_sum {
-                println!("Invalid intermediate claim_sum");
-                println!("Sums are fbc_eval: {} and claimed_sum: {}", fbc_eval, claimed_sum);
-                println!("This occured in layer {} of {} layers", layer_i, layer_count);
+                // println!("Invalid intermediate claim_sum");
+                // println!("Sums are fbc_eval: {} and claimed_sum: {}", fbc_eval, claimed_sum);
+                // println!("This occured in layer {} of {} layers", layer_i, layer_count);
 
                 return false;
             }

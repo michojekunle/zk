@@ -41,8 +41,6 @@ impl<F: PrimeField, E: Pairing> MultilinearKZGVerifier<F, E> {
 
         let rhs = rhs_calc.iter().sum();
 
-        // dbg!(&rhs);
-        // dbg!(&lhs);
 
         lhs == rhs
     }

@@ -88,13 +88,6 @@ mod tests {
         let random_element_l = transcript.squeeze();
         let random_element_m = transcript.squeeze();
 
-        dbg!(&random_element);
-        dbg!(&random_element_i);
-        dbg!(&random_element_j);
-        dbg!(&random_element_k);
-        dbg!(&random_element_l);
-        dbg!(&random_element_m);
-
         assert_ne!(random_element, Fq::from(element)); // verify randomness
     }
 }

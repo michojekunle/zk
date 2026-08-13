@@ -5,7 +5,7 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 #[derive(Clone, Debug)]
-pub(crate) struct Gate {
+pub struct Gate {
     left: usize,
     right: usize,
     output: usize,
@@ -26,7 +26,7 @@ pub struct Circuit<F: PrimeField> {
 }
 
 impl Gate {
-    pub(crate) fn new(left: usize, right: usize, output: usize, op: Op) -> Self {
+    pub fn new(left: usize, right: usize, output: usize, op: Op) -> Self {
         Gate {
             left,
             right,
@@ -37,7 +37,7 @@ impl Gate {
 }
 
 impl<F: PrimeField> Circuit<F> {
-    pub(crate) fn new(layers: Vec<Vec<Gate>>, input_len: usize) -> Self {
+    pub fn new(layers: Vec<Vec<Gate>>, input_len: usize) -> Self {
         Circuit {
             layers,
             input_len,
@@ -45,7 +45,7 @@ impl<F: PrimeField> Circuit<F> {
         }
     }
 
-    pub(crate) fn eval(&self, input_layer: Vec<F>) -> Vec<Vec<F>> {
+    pub fn eval(&self, input_layer: Vec<F>) -> Vec<Vec<F>> {
         let mut layer_outputs = vec![input_layer];
 
         for layer in self.layers.clone().into_iter().rev() {
@@ -68,7 +68,7 @@ impl<F: PrimeField> Circuit<F> {
         layer_outputs
     }
 
-    pub(crate) fn get_layer_poly(
+    pub fn get_layer_poly(
         &self,
         layer_id: usize,
         input_layer: Vec<F>,
@@ -83,7 +83,7 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(layer_eval.to_vec(), n.try_into().unwrap())
     }
 
-    pub(crate) fn add_mul_i(&self, layer_id: usize, op: Op) -> MultilinearPoly<F> {
+    pub fn add_mul_i(&self, layer_id: usize, op: Op) -> MultilinearPoly<F> {
         let layer = &self.layers[layer_id];
         
         let l_i_vars = (layer.len() as f64).log2().ceil().max(1.0) as u32;
@@ -120,7 +120,7 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(evals, n_vars)
     }
 
-    pub(crate) fn w_add_mul(
+    pub fn w_add_mul(
         poly_1: &MultilinearPoly<F>,
         poly_2: &MultilinearPoly<F>,
         op: Op,
@@ -146,7 +146,7 @@ impl<F: PrimeField> Circuit<F> {
         MultilinearPoly::new(new_evals, new_nvars)
     }
 
-    pub(crate) fn generate_fbc(
+    pub fn generate_fbc(
         add_i: MultilinearPoly<F>,
         mul_i: MultilinearPoly<F>,
         w_i_plus_1: &MultilinearPoly<F>,
@@ -161,7 +161,7 @@ impl<F: PrimeField> Circuit<F> {
         SumPoly::new(product_polys)
     }
 
-    pub(crate) fn get_layer_count(&self) -> usize {
+    pub fn get_layer_count(&self) -> usize {
         self.layers.len()
     }
 }

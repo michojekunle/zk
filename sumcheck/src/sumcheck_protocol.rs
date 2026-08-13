@@ -233,8 +233,6 @@ mod tests {
     pub fn test_sumcheck() {
         let mut poly = MultilinearPoly::new(to_field(vec![0, 0, 0, 3, 0, 0, 2, 5]), 3);
         let proof = prove(&poly, Fr::from(10));
-
-        dbg!(verify(&proof, &mut poly));
     }
 
     #[test]
@@ -260,7 +258,6 @@ mod tests {
         let sum_check_proof = partial_prove(&initial_polynomial, Fr::from(12), &mut transcript_p);
 
         let res = partial_verify(&sum_check_proof, &mut transcript_v);
-        dbg!(&res);
         // assert!(.0);
     }
 
@@ -281,7 +278,6 @@ mod tests {
         let mut poly = get_2_20_poly();
         let proof = prove(&poly, Fr::from(10));
 
-        dbg!(verify(&proof, &mut poly));
         print_summary!();
     }
 }

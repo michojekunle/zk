@@ -64,7 +64,7 @@ mod tests {
             &trusted_setup.encrypted_lagrange_basis,
         );
 
-        dbg!(&proof);
+        // dbg!(&proof);
 
         let is_verified = MultilinearKZGVerifier::<Fr, Bls12_381>::verify(
             &commitment,
@@ -73,7 +73,7 @@ mod tests {
             &trusted_setup.encrypted_taus,
         );
 
-        dbg!(&is_verified);
+        // dbg!(&is_verified);
         assert!(is_verified, "Proof verification failed");
     }
 }

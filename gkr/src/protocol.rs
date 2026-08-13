@@ -75,7 +75,7 @@ mod tests {
         let mut transcript_v = FiatShamir::<Keccak256, Fq>::new();
 
         let gkr_proof = GKRProver::prove(&input, &mut circuit, &mut transcript_p);
-        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, &gkr_proof);
 
         assert!(is_verified);
     }
@@ -91,7 +91,7 @@ mod tests {
         // Malicious prover tampers with the output polynomial
         gkr_proof.output_poly.evals[0] = Fq::from(999u64);
         
-        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, &gkr_proof);
         
         assert!(!is_verified);
     }
@@ -107,7 +107,7 @@ mod tests {
         // Malicious prover tampers with the initial claim of the first sumcheck
         gkr_proof.sumcheck_proofs[0].initial_claimed_sum = Fq::from(999u64);
         
-        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, gkr_proof);
+        let is_verified = GKRVerifier::verify(&input, &mut circuit, &mut transcript_v, &gkr_proof);
         
         assert!(!is_verified);
     }
